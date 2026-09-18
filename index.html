@@ -1,0 +1,1115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ClownVoiceCommand</title>
+<meta name="description" content="Speaking training: five daily drills, recorded reps, synced progress.">
+<meta name="theme-color" content="#07090D">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ClownVoice">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Exo+2:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  color-scheme:dark;
+  --ground:#07090D; --surface:#121925; --sunk:#0B1018; --ink:#F2F4F7; --muted:#9AA5B4; --line:#253043;
+  --accent:#FFC61A; --accent-ink:#0A0A0A; --accent-soft:#2B2410; --blue:#15233F; --steel:#1C2433;
+  --onair:#FFC61A; --good:#3DD68C; --good-soft:#0F2E21; --warn:#FF8A3D; --warn-soft:#33200F; --bad:#FF5A5F; --bad-soft:#3A1519;
+  --display:"Exo 2","Trebuchet MS",sans-serif; --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  --r:14px; --glow:0 0 0 1px color-mix(in srgb,var(--accent) 45%,transparent),0 8px 28px -12px color-mix(in srgb,var(--accent) 55%,transparent);
+  --ease:cubic-bezier(.2,.8,.2,1);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{background:var(--ground)}
+html{-webkit-text-size-adjust:100%}
+*{-webkit-tap-highlight-color:transparent}
+body{background:radial-gradient(120% 55% at 50% -10%,#16264a 0%,rgba(22,38,74,0) 62%) fixed,var(--ground);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;padding-inline:16px;padding-block:0 calc(110px + env(safe-area-inset-bottom,0px))}
+.wrap{max-width:820px;margin:0 auto}
+@media (min-width:1100px){.wrap{max-width:960px}}
+h1,h2,h3{font-family:var(--display);font-weight:700;letter-spacing:.01em;line-height:1.1;text-wrap:balance;margin:0}
+h1{font-size:30px}
+h2{font-size:24px}
+h3{font-size:19px}
+p{margin:0}
+.muted{color:var(--muted)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+button,select,input,textarea{font:inherit;color:inherit}
+button{touch-action:manipulation;cursor:pointer;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:10px 14px;min-height:44px;font-weight:500}
+button{transition:transform .12s var(--ease),border-color .2s,background .2s,box-shadow .2s}
+button:hover{border-color:var(--accent)}
+button:active{transform:scale(.97)}
+.block>summary{transition:background .2s}
+.block>summary:hover{background:color-mix(in srgb,var(--accent) 6%,transparent)}
+.block{transition:box-shadow .3s var(--ease),border-color .3s}
+.stat,.card,.lvl{transition:transform .2s var(--ease),border-color .2s}
+.card:hover,.lvl:hover{border-color:color-mix(in srgb,var(--accent) 40%,var(--line))}
+@media (prefers-reduced-motion:no-preference){
+  section.view:not([hidden]){animation:fadeup .28s var(--ease)}
+  .block[open] .bbody{animation:fadeup .25s var(--ease)}
+  @keyframes fadeup{from{opacity:.4;transform:translateY(6px)}to{opacity:1;transform:none}}
+  button.rec.on{animation:recpulse 1.2s ease-in-out infinite}
+  @keyframes recpulse{50%{box-shadow:0 0 4px -2px var(--accent)}}
+}
+button:focus-visible,textarea:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600;box-shadow:0 0 18px -6px var(--accent)}
+button.rec{border-color:var(--accent);color:var(--ink);background:var(--steel);min-height:52px;padding:10px 18px;border-radius:999px;font-weight:600}
+button.rec.on{background:var(--accent);color:var(--accent-ink);box-shadow:0 0 22px -4px var(--accent)}
+.meter{height:6px;border-radius:3px;background:var(--steel);overflow:hidden;margin-top:8px;flex-basis:100%}
+.meter b{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--good),var(--accent) 70%,var(--bad));transition:width .08s linear}
+.tbar{height:4px;border-radius:2px;background:var(--steel);overflow:hidden;flex-basis:100%}
+.tbar b{display:block;height:100%;width:0;background:var(--accent);transition:width .25s linear}
+.upl{font-size:14px;color:var(--accent);text-decoration:underline;cursor:pointer;min-height:44px;display:inline-flex;align-items:center}
+.upl input{position:absolute;width:1px;height:1px;opacity:0}
+button:disabled{opacity:.5;cursor:not-allowed}
+textarea,input,select{font-size:16px;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+textarea{min-height:110px;resize:vertical}
+label{display:block;font-size:13px;color:var(--muted);margin-bottom:4px}
+
+/* header */
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:color-mix(in srgb,var(--ground) 88%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding-block:14px 10px;border-bottom:1px solid var(--line);margin-inline:-16px;padding-inline:16px}
+.toprow{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;max-width:760px;margin:0 auto}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand img{width:clamp(38px,11vw,50px);height:auto;border-radius:10px;filter:drop-shadow(0 0 10px rgba(47,160,255,.35))}
+.brand h1{font-size:clamp(19px,5.4vw,26px);font-weight:800;letter-spacing:.01em;background:linear-gradient(90deg,#E6EAF0 0%,#E6EAF0 38%,var(--accent) 60%,#FFE27A 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none}
+.sync{font-family:var(--mono);font-size:11px;padding:3px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.sync.on{color:var(--good);border-color:color-mix(in srgb,var(--good) 45%,transparent)}
+.lamp{width:10px;height:10px;border-radius:50%;background:var(--line)}
+.lamp.live{background:var(--bad);box-shadow:0 0 12px var(--bad)}
+.levelchip{font-family:var(--mono);font-size:12px;padding:4px 10px;border-radius:999px;background:var(--accent);color:var(--accent-ink);font-weight:500}
+nav.tabs{display:flex;gap:4px;max-width:760px;margin:10px auto 0}
+nav.tabs button{flex:1;border:none;background:transparent;border-radius:10px;padding:8px 6px;min-height:46px;color:var(--muted);font-family:var(--display);font-weight:600;font-size:16px;letter-spacing:.02em}
+nav.tabs button{transition:color .2s,background .2s}
+nav.tabs button[aria-selected="true"]{background:var(--surface);color:var(--accent);box-shadow:inset 0 -2px 0 var(--accent)}
+@media (max-width:820px){
+  header.top{backdrop-filter:none;-webkit-backdrop-filter:none;background:var(--ground)}
+  nav.tabs{backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);position:fixed;left:0;right:0;bottom:0;margin:0;background:color-mix(in srgb,var(--surface) 92%,transparent);border-top:1px solid var(--line);padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));z-index:6}
+  nav.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink);box-shadow:none}
+}
+.banner{margin-top:14px;padding:10px 12px;border-radius:8px;background:var(--warn-soft);color:var(--ink);font-size:14px}
+section.view{display:flex;flex-direction:column;gap:14px;padding-top:18px}
+
+/* today */
+.next{display:flex;flex-direction:column;gap:6px;padding:16px;border-radius:var(--r);background:linear-gradient(135deg,#15233F 0%,#0E1522 65%,#0A0A0A 100%);box-shadow:var(--glow);position:relative;overflow:hidden}
+.next::after{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:var(--accent)}
+.segs{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:6px}
+.segs i{height:6px;border-radius:3px;background:var(--steel);transition:background .4s var(--ease),box-shadow .4s var(--ease)}
+.segs i.on{background:var(--accent);box-shadow:0 0 10px -2px var(--accent)}
+.next .eyebrow{color:var(--accent)}
+.next .goal{font-size:14px;color:#C9D1DC}
+.next h2{color:#fff}
+.next h2{font-size:26px}
+.dayline{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.pill{font-family:var(--mono);font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);background:var(--surface)}
+.pill.good{background:var(--good-soft);border-color:transparent;color:var(--good)}
+.pill.warn{background:var(--warn-soft);border-color:transparent;color:var(--warn)}
+.pill.bad{background:var(--bad-soft);border-color:transparent;color:var(--bad)}
+.block{background:color-mix(in srgb,var(--surface) 94%,transparent);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.block>summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:34px 1fr auto;gap:12px;align-items:center;padding:14px 16px;min-height:56px}
+.block>summary::-webkit-details-marker{display:none}
+.bnum{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-family:var(--mono);font-size:13px;border:1.5px solid var(--line)}
+.block.done .bnum{background:var(--good);border-color:var(--good);color:var(--accent-ink)}
+.block[open]{box-shadow:var(--glow);border-color:transparent}
+.btitle{display:flex;flex-direction:column}
+.btitle small{color:var(--muted);font-size:13px}
+.bmin{font-family:var(--mono);font-size:13px;color:var(--muted)}
+.bbody{padding:0 16px 16px;display:flex;flex-direction:column;gap:14px;border-top:1px solid var(--line);padding-top:14px}
+.lesson{font-size:15px;max-width:65ch}
+.timer{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;border-radius:8px;background:var(--sunk)}
+.timer .clock{font-family:var(--mono);font-size:28px;font-variant-numeric:tabular-nums;min-width:92px}
+.timer button{min-height:40px;padding:8px 12px}
+ol.steps{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+ol.steps li{display:grid;grid-template-columns:48px 1fr;gap:8px;padding:8px 10px;border-radius:8px;border:1px solid transparent}
+ol.steps li .at{font-family:var(--mono);font-size:13px;color:var(--muted);padding-top:1px}
+ol.steps li{transition:background .3s,border-color .3s}
+ol.steps li.now{border-color:var(--accent);background:var(--accent-soft)}
+.material{border-left:3px solid var(--accent);padding:8px 12px;background:var(--sunk);border-radius:0 8px 8px 0;font-size:15px}
+.material .eyebrow{margin-bottom:4px}
+.material ul{margin:4px 0 0;padding-left:18px}
+.pass{font-size:14px;padding:8px 12px;border-radius:8px;background:var(--good-soft)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row.end{justify-content:flex-end}
+.check{display:flex;align-items:center;gap:10px;font-size:15px;color:var(--ink);margin:0;min-height:44px;cursor:pointer}
+.check input{width:22px;height:22px;accent-color:var(--good)}
+
+/* rep */
+.rep{display:flex;flex-direction:column;gap:10px;padding:12px;border:1px dashed var(--line);border-radius:8px}
+.prompt{font-size:16px;font-weight:500;max-width:65ch}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}
+.stat{padding:8px 10px;border-radius:8px;background:var(--sunk)}
+.stat b{display:block;font-family:var(--mono);font-weight:500;font-size:18px}
+.stat span{font-size:12px;color:var(--muted)}
+.stat.good b{color:var(--good)} .stat.warn b{color:var(--warn)} .stat.bad b{color:var(--bad)}
+.fb{display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:8px;background:var(--blue);border:1px solid color-mix(in srgb,var(--accent) 30%,transparent)}
+.fb .eyebrow{color:var(--accent)}
+.fb .scores{font-family:var(--mono);font-size:13px}
+.fb .rewrite{white-space:pre-wrap;font-size:15px;background:var(--surface);padding:10px 12px;border-radius:8px}
+.chat{display:flex;flex-direction:column;gap:8px;max-height:360px;overflow:auto;padding:4px}
+.msg{padding:8px 12px;border-radius:10px;max-width:88%;font-size:15px}
+.msg.them{background:var(--sunk);align-self:flex-start}
+.msg.me{background:var(--accent);color:var(--accent-ink);align-self:flex-end}
+.msg .who{font-family:var(--mono);font-size:11px;color:var(--muted);display:block}
+
+/* progress */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:14px}
+.chart svg{width:100%;height:auto;display:block}
+.gate{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.gate li{display:flex;justify-content:space-between;gap:10px;padding:8px 10px;border-radius:8px;background:var(--sunk);font-size:14px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;max-width:360px}
+.cal i{aspect-ratio:1;border-radius:4px;background:var(--sunk);display:block}
+.cal i.min{background:color-mix(in srgb,var(--good) 45%,var(--sunk))}
+.cal i.full{background:var(--good)}
+.cal i.today{outline:2px solid var(--accent)}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.legend span::before{content:"";display:inline-block;width:14px;height:2px;margin-right:6px;vertical-align:middle;background:currentColor}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-weight:500;color:var(--muted);font-size:12px}
+td.mono{font-family:var(--mono)}
+
+/* plan */
+.lvl{background:var(--surface);display:grid;grid-template-columns:auto 1fr;gap:4px 14px;padding:14px 16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+.lvl .n{font-family:var(--display);font-weight:800;font-size:40px;line-height:1;color:var(--accent);text-shadow:0 0 16px color-mix(in srgb,var(--accent) 60%,transparent);grid-row:span 3}
+.lvl.cur{border-color:var(--accent);box-shadow:inset 4px 0 0 var(--accent),var(--glow)}
+.lvl ul{margin:4px 0 0;padding-left:18px;font-size:14px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--accent);color:var(--accent-ink);font-weight:500;padding:10px 16px;border-radius:8px;font-size:14px;z-index:9}
+@media (prefers-reduced-motion:no-preference){ .lamp.live{animation:pulse 1.2s ease-in-out infinite} @keyframes pulse{50%{opacity:.35}} }
+
+/* ===== deep 3D yellow ===== */
+:root{
+  --y-grad:linear-gradient(180deg,#FFEA8A 0%,#FFD23A 28%,#FFC61A 55%,#E3A600 100%);
+  --y-edge:#8A6200; --y-deep:#4A3400;
+  --y-shadow:inset 0 1px 0 rgba(255,255,255,.75),inset 0 -3px 0 rgba(120,80,0,.35),inset 0 0 0 1px rgba(255,236,150,.35),0 4px 0 var(--y-edge),0 6px 0 var(--y-deep),0 12px 22px -6px rgba(255,198,26,.55);
+  --y-shadow-press:inset 0 1px 0 rgba(255,255,255,.5),inset 0 2px 6px rgba(120,80,0,.45),0 1px 0 var(--y-edge),0 2px 0 var(--y-deep),0 4px 10px -4px rgba(255,198,26,.45);
+  --k-grad:linear-gradient(180deg,#26324A 0%,#18212F 55%,#111823 100%);
+  --k-shadow:inset 0 1px 0 rgba(255,255,255,.10),inset 0 -2px 0 rgba(0,0,0,.35),0 3px 0 #05070B,0 8px 16px -8px rgba(0,0,0,.8);
+}
+.brand h1{background:none;-webkit-background-clip:border-box;background-clip:border-box;color:#E6EAF0;text-shadow:0 1px 0 #9AA5B4,0 2px 0 #5B6573,0 3px 6px rgba(0,0,0,.6)}
+.y3d-text{color:#FFC61A;text-shadow:0 1px 0 #E3A600,0 2px 0 #B98800,0 3px 0 #8A6200,0 4px 0 #4A3400,0 6px 10px rgba(0,0,0,.7),0 0 18px rgba(255,198,26,.35)}
+button{background:var(--k-grad);box-shadow:var(--k-shadow);border-color:#2B3850;border-top-color:#3A4866}
+button:hover{border-color:#3A4866;border-top-color:var(--accent)}
+button:active{transform:translateY(2px);box-shadow:inset 0 2px 6px rgba(0,0,0,.6),0 1px 0 #05070B}
+button.primary,button.rec.on,nav.tabs button[aria-selected="true"],.levelchip{background:var(--y-grad);color:#0A0A0A;border:1px solid #FFE27A;border-bottom-color:#B98800;text-shadow:0 1px 0 rgba(255,255,255,.45);box-shadow:var(--y-shadow)}
+button.primary:active,button.rec.on:active,nav.tabs button[aria-selected="true"]:active{transform:translateY(4px);box-shadow:var(--y-shadow-press)}
+nav.tabs button[aria-selected="true"]{margin-bottom:6px}
+nav.tabs{align-items:flex-start}
+.levelchip{box-shadow:inset 0 1px 0 rgba(255,255,255,.75),inset 0 -2px 0 rgba(120,80,0,.35),0 2px 0 var(--y-edge),0 3px 0 var(--y-deep),0 6px 12px -4px rgba(255,198,26,.5);font-weight:600}
+button.rec{background:var(--k-grad);border:1px solid #FFC61A;box-shadow:var(--k-shadow),0 0 0 1px rgba(255,198,26,.15)}
+.sync{cursor:pointer;min-height:30px;padding:4px 10px;font-family:var(--mono);font-size:11px;border-radius:999px}
+.sync.on{color:var(--good);border-top-color:var(--good)}
+.sync.busy{color:var(--accent)}
+.next{border:1px solid #FFD23A;border-bottom-color:#8A6200;border-right-color:#B98800;box-shadow:inset 0 1px 0 rgba(255,236,150,.35),0 3px 0 #8A6200,0 5px 0 #4A3400,0 18px 36px -14px rgba(255,198,26,.55)}
+.next::after{background:var(--y-grad);width:6px;box-shadow:inset -1px 0 0 rgba(0,0,0,.25)}
+.block[open]{border:1px solid #FFD23A;border-bottom-color:#8A6200;box-shadow:inset 0 1px 0 rgba(255,236,150,.25),0 3px 0 #8A6200,0 5px 0 #4A3400,0 16px 30px -16px rgba(255,198,26,.55)}
+.block{box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 3px 0 #05070B}
+.block.done .bnum{background:radial-gradient(circle at 35% 30%,#7CF3B6,#3DD68C 55%,#1F9A5E);border-color:#1F9A5E;box-shadow:0 2px 0 #0E5A36}
+.block[open] .bnum{background:var(--y-grad);border-color:#FFE27A;color:#0A0A0A;box-shadow:0 2px 0 var(--y-edge),0 3px 0 var(--y-deep)}
+.segs i{height:10px;border-radius:5px;background:linear-gradient(180deg,#0B1018,#1C2433);box-shadow:inset 0 2px 3px rgba(0,0,0,.6)}
+.segs i.on{background:var(--y-grad);box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 2px 0 var(--y-edge),0 0 12px -2px rgba(255,198,26,.8)}
+.tbar,.meter{height:10px;border-radius:5px;background:linear-gradient(180deg,#0B1018,#1C2433);box-shadow:inset 0 2px 3px rgba(0,0,0,.6)}
+.tbar b{background:var(--y-grad);box-shadow:inset 0 1px 0 rgba(255,255,255,.7)}
+.material{border-left:0;position:relative;padding-left:18px;box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+.material::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;border-radius:6px 0 0 6px;background:var(--y-grad);box-shadow:inset -1px 0 0 rgba(0,0,0,.3),1px 0 0 var(--y-edge)}
+.stat{background:linear-gradient(180deg,#141C29,#0B1018);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 2px 0 #05070B}
+.fb{box-shadow:inset 0 1px 0 rgba(255,236,150,.2),0 3px 0 #0A1426}
+.msg.me{background:var(--y-grad);box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 3px 0 var(--y-edge)}
+.lvl .n{color:#FFC61A;text-shadow:0 1px 0 #E3A600,0 2px 0 #B98800,0 3px 0 #8A6200,0 4px 0 #4A3400,0 8px 14px rgba(0,0,0,.7)}
+.lvl.cur{border-color:#FFD23A;box-shadow:inset 6px 0 0 #FFC61A,0 3px 0 #8A6200,0 5px 0 #4A3400,0 16px 30px -16px rgba(255,198,26,.5)}
+.pill.good,.pill.warn{box-shadow:0 2px 0 rgba(0,0,0,.5)}
+.check input{accent-color:#FFC61A}
+.toast{background:var(--y-grad);color:#0A0A0A;box-shadow:var(--y-shadow)}
+@media (prefers-reduced-motion:no-preference){button.rec.on{animation:recpulse3d 1.2s ease-in-out infinite}@keyframes recpulse3d{50%{filter:brightness(1.15)}}}
+
+/* ===== layout + navigation v5 ===== */
+.wrap{max-width:980px}
+header.top{margin-inline:-16px;padding:10px 16px}
+.bar{max-width:980px;margin:0 auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.brand{flex:0 0 auto}
+.status{display:flex;align-items:center;gap:8px;margin-left:auto}
+nav.tabs{margin:0 auto;flex:1 1 380px;max-width:480px;display:flex;gap:6px;align-items:center}
+nav.tabs button{display:flex;align-items:center;justify-content:center;gap:7px;margin-bottom:0}
+nav.tabs svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+nav.tabs button:not([aria-selected="true"]){background:transparent;box-shadow:none;border-color:transparent}
+nav.tabs button:not([aria-selected="true"]):hover{color:var(--ink);background:var(--steel)}
+@media (max-width:820px){
+  header.top{position:relative;top:auto;padding-block:12px 10px}
+  .brand img{width:40px}
+  .status{margin-left:0;width:100%}
+  nav.tabs{max-width:none;gap:4px;align-items:stretch}
+  nav.tabs button{flex-direction:column;gap:2px;font-size:12px;min-height:54px;padding:6px 4px;margin-bottom:0}
+  nav.tabs svg{width:22px;height:22px}
+}
+/* Today grid + stepper */
+.today-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+.blocks{display:flex;flex-direction:column;gap:14px;min-width:0}
+details.block{scroll-margin-top:calc(var(--hdr,0px) + 76px)}
+.rail{position:sticky;top:calc(var(--hdr,0px) + env(safe-area-inset-top,0px));z-index:4;margin-inline:-16px;padding:8px 16px;background:color-mix(in srgb,var(--ground) 94%,transparent);border-bottom:1px solid var(--line)}
+.railhead,.railinfo{display:none}
+.stepper{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:6px}
+.stepper::-webkit-scrollbar{display:none}
+.stepper button{flex:0 0 auto;display:flex;align-items:center;gap:8px;min-height:42px;padding:6px 14px 6px 6px;border-radius:999px;font-size:14px;white-space:nowrap}
+.stepper .sn{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-family:var(--mono);font-size:12px;background:var(--sunk);border:1px solid var(--line)}
+.stepper .sm{display:none;margin-left:auto;font-size:12px;color:var(--muted)}
+.stepper button.done .sn{background:radial-gradient(circle at 35% 30%,#7CF3B6,#3DD68C 55%,#1F9A5E);border-color:#1F9A5E;color:#062015}
+.stepper button.cur{background:var(--y-grad);color:#0A0A0A;border:1px solid #FFE27A;border-bottom-color:#B98800;box-shadow:var(--y-shadow);margin-bottom:6px}
+.stepper button.cur .sn{background:#0A0A0A;color:var(--accent);border-color:#0A0A0A}
+.stepper button.cur .sm{color:#3a3000}
+.next .pills{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.next .pill{background:rgba(0,0,0,.35);border-color:#2E3B52;color:#C9D1DC}
+.nextbtn{align-self:flex-end}
+@media (min-width:1100px){
+  .wrap,.bar{max-width:1140px}
+  .today-grid{grid-template-columns:260px minmax(0,1fr);align-items:start;column-gap:22px}
+  .today-grid>.next,.today-grid>.banner{grid-column:1/-1}
+  .rail{margin:0;padding:14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);top:calc(var(--hdr,72px) + 16px);box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 3px 0 #05070B}
+  .railhead{display:block;margin-bottom:10px}
+  .railinfo{display:block;font-size:13px;margin-top:10px}
+  .stepper{flex-direction:column;overflow:visible;padding:0}
+  .stepper button{width:100%;border-radius:10px;min-height:50px;padding:8px 12px 8px 8px}
+  .stepper .sm{display:block}
+  .stepper button.cur{margin-bottom:6px}
+}
+nav.tabs button[aria-selected="true"]{margin-bottom:0}
+.gate .pill{white-space:nowrap;flex:none;align-self:center}
+.upl.uplbtn{text-decoration:none;color:#0A0A0A;background:var(--y-grad);border:1px solid #FFE27A;border-bottom-color:#B98800;box-shadow:var(--y-shadow);border-radius:999px;padding:10px 18px;font-weight:600;margin-top:4px}
+/* progress */
+.charts{grid-template-columns:minmax(0,1fr)}
+@media (min-width:700px){.charts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.chart .row{flex-wrap:nowrap}
+.chart h3{flex:1;min-width:0}
+.chart .row .mono{flex:none}
+.calwrap{overflow-x:auto}
+.cal{display:grid;grid-template-rows:repeat(7,16px);grid-auto-flow:column;grid-auto-columns:16px;gap:4px;max-width:none;width:max-content}
+.cal i{width:16px;height:16px;aspect-ratio:auto;border-radius:4px}
+.gate .pill.neutral{background:var(--sunk);color:var(--muted);border-color:var(--line)}
+@media (max-width:420px){.cal{grid-template-rows:repeat(7,14px);grid-auto-columns:14px;gap:3px}.cal i{width:14px;height:14px}}
+
+.gatewrap{position:fixed;inset:0;z-index:20;background:rgba(5,7,11,.92);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:grid;place-items:center;padding:16px;overflow:auto}
+.gatecard{width:min(440px,100%)}
+.gatecard .brand h1{font-size:24px}
+</style>
+<style>:root{padding-top:env(safe-area-inset-top,0px)} html,body{margin:0} img{max-width:100%}</style>
+</head>
+<body>
+<header class="top"><div class="bar">
+  <div class="brand"><img src="data:image/webp;base64,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" alt="Cash Clowns logo"><h1>ClownVoice<span class="y3d-text">Command</span></h1></div>
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button role="tab" id="tab-today" aria-selected="true" aria-controls="v-today" tabindex="0" data-v="today"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><span>Today</span></button>
+    <button role="tab" id="tab-progress" aria-selected="false" aria-controls="v-progress" tabindex="-1" data-v="progress"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19h16"/><path d="M5 15l4-4 3 3 6-7"/></svg><span>Progress</span></button>
+    <button role="tab" id="tab-plan" aria-selected="false" aria-controls="v-plan" tabindex="-1" data-v="plan"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h10M4 12h16M4 18h12"/><circle cx="18" cy="6" r="2"/></svg><span>Plan</span></button>
+    <button role="tab" id="tab-log" aria-selected="false" aria-controls="v-log" tabindex="-1" data-v="log"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg><span>Log</span></button>
+  </nav>
+  <div class="status"><span class="lamp" id="lamp" title="Recording light"></span><button type="button" class="sync" id="sync" aria-live="polite">⟳ Connecting</button><span class="levelchip" id="levelchip">Level 1 · Foundation</span></div>
+</div></header>
+<div class="wrap">
+<div id="banner" class="banner" hidden></div>
+<section class="view" id="v-today" role="tabpanel" aria-labelledby="tab-today"></section>
+<section class="view" id="v-progress" role="tabpanel" aria-labelledby="tab-progress" hidden></section>
+<section class="view" id="v-plan" role="tabpanel" aria-labelledby="tab-plan" hidden></section>
+<section class="view" id="v-log" role="tabpanel" aria-labelledby="tab-log" hidden></section>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+/* ================= CURRICULUM ================= */
+const FILLERS=["um","uh","like","you know","kind of","basically","actually","so"];
+const HEDGES=["i think","maybe","i guess","just","sort of","i'm not sure","hopefully","hope","trying to","try to"];
+const TICS=["go ahead and"];
+
+const WORDS=[
+ ["Scope","The impact is scoped to 40 users in the Houston OU."],
+ ["Blast radius","Before we push this policy, the blast radius is every Windows device in the tenant."],
+ ["Remediation","Remediation is a policy exclusion, then a forced sync."],
+ ["Mitigation","Mitigation is in place. Users can work. Remediation follows tonight."],
+ ["Root cause","Root cause was an expired certificate on the connector."],
+ ["Contributing factor","A contributing factor was no alerting on certificate expiry."],
+ ["Deterministic","The failure is deterministic. It reproduces every time on the same device model."],
+ ["Intermittent","It's intermittent, roughly 1 in 10 sign-ins, which points away from configuration."],
+ ["Regression","This is a regression from last Tuesday's update ring."],
+ ["Idempotent","The script is idempotent, so rerunning it is safe."],
+ ["Dependency","Mail flow has a dependency on the DNS change landing first."],
+ ["Precedence","Conditional Access evaluates all policies. Block takes precedence."],
+ ["Latency","Replication latency is up to 24 hours, so expect staggered results."],
+ ["Posture","Our security posture improves once legacy auth is blocked."],
+ ["Least privilege","GDAP lets us operate on least privilege per client."],
+ ["Tradeoff","The tradeoff is user friction versus token theft risk."],
+ ["Cadence","We'll move to a 30-minute update cadence until resolved."],
+ ["Rollback plan","The rollback plan is disabling the policy. Under two minutes."],
+ ["Validate","I'll validate with a pilot group before tenant-wide."],
+ ["Consolidate","We should consolidate these four policies into one baseline."],
+ ["Deprecate","Microsoft is deprecating that module. We need to move to Graph."],
+ ["Governance","This is a governance gap, not a technical one."],
+ ["Materially","That change materially reduces the ticket volume."],
+ ["Proactively","I'll proactively notify the affected users before the cutover."],
+ ["Net effect","The net effect is one sign-in prompt per day instead of five."],
+ ["Candidly","Candidly, that timeline doesn't hold. Here's the one that does."],
+ ["Alignment","I want alignment on the approach before we touch production."],
+ ["Accountable","I'm accountable for the fix. The service desk owns the comms."],
+ ["Pragmatic","The pragmatic path is to exclude the service account now and fix properly Monday."],
+ ["Constraint","The constraint is the change freeze through Friday."]
+];
+const TOPICS=["Conditional Access","GDAP","Intune compliance policies","Mail flow and MX records","Hybrid identity","Windows Autopilot","Data Loss Prevention","BitLocker recovery keys","Blocking legacy authentication","Continuous access evaluation","Least privilege admin roles (PIM)","Windows 365 Cloud PCs","Defender for Endpoint onboarding","Retention policies","SPF, DKIM and DMARC","Tenant-to-tenant migration"];
+const FALL_LINES=["I own this.","Mail is flowing.","Root cause is confirmed.","Next update at three.","That's the recommendation.","We are not rolling back.","I'll have it by noon.","The risk is real.","Here's what we know.","The decision is needed today."];
+const BUZZ=["Walk through how you set up a new laptop with Autopilot.","The last thing you automated with PowerShell and why.","What makes a good ticket note.","How you'd explain MFA to a non-technical relative.","Your ideal first week for a new engineer.","The worst outage you worked and what fixed it.","Why the service desk matters to a client's business.","What you'd change about your team's process."];
+const PASSAGES=[
+ "Mail flow is restored. / Root cause was an expired connector certificate. / We renewed it at 2:10. / Queued messages are delivering now. / Next update at 3:00.",
+ "Twelve devices failed Intune enrollment overnight. / All twelve are the same model. / The failure is deterministic. / I'm validating a driver fix on one device. / Update by noon.",
+ "This morning's MFA lockout affected forty users in the Houston office. / Mitigation is in place. / Users can sign in. / Remediation is a policy exclusion, / then a forced sync tonight.",
+ "The license assignment failed because the group had no usage location. / I set it. / Licenses applied at 9:40. / No further action is needed from your team.",
+ "We traced the delay to the Microsoft service side. / The case is open at Severity B. / I own the follow-up. / Next update at 4:00.",
+ "The migration batch completed at 6:15. / Ninety-eight of one hundred mailboxes finalized. / Two are blocked on large items. / I'll finish those by end of day."
+];
+
+const LEVELS=[
+{ n:1, name:"Foundation", tag:"Stop the leaks", weeks:"Weeks 1 to 3",
+  goal:"Replace fillers with silent pauses. Land statements with a falling tone. Answer the question in the first sentence.",
+  structure:["Answer","Evidence","Implication","What happens next"],
+  voice:{ min:10, lesson:"Fillers are what your mouth does while your brain looks for the next word. Trying harder does not remove them. A silent pause replaces them. A falling tone on the last word tells the room the statement is finished and you mean it.",
+    steps:[["0:00","Breath reset. In for 4, hold 4, out for 6. Four rounds. Shoulders down."],["1:00","Pause drill. Read the passage aloud. Every slash is a full stop: close your mouth, count one silently, continue."],["4:00","Falling-tone ladder. Say each line. Drop pitch on the last word like setting down a cup. Record three and listen."],["7:00","Filler buzzer. Talk 60 seconds on the topic. On any filler, stop, pause, restart the sentence. Run it twice."]],
+    pass:"Second 60-second run: 2 fillers or fewer and zero \"go ahead and\"." },
+  reps:{ min:12, lesson:"Your baseline: about 1 in 5 key answers led with the conclusion. Executives decide in the first sentence whether you know. Say the answer, then prove it.",
+    steps:[["0:00","Read the structure card."],["1:00","Prompt 1. Take 20 seconds, then answer out loud in 45 seconds. Record it. Dictate or type what you said. Score it."],["4:30","Prompt 2. Same loop."],["8:00","Prompt 3. Same loop."],["11:00","Write the one fix you'll carry into tomorrow."]],
+    pass:"All three answers open with the answer itself, not background.",
+    prompts:[
+     "The office manager asks: \"Is our email down or is it just me?\" Three users have no mail since 8:40. MX still points to the old host after last night's DNS change.",
+     "Your manager asks: \"Why did the new laptops fail Autopilot?\" Hardware hashes for the batch of 15 were never uploaded.",
+     "A client asks: \"Can we turn on MFA for everyone today?\" Two service accounts and a scanner still use legacy auth.",
+     "The Fabrikam CFO asks: \"Why was I locked out this morning?\" A Conditional Access policy blocked sign-in from an unmanaged device.",
+     "A user asks: \"Why can't I share files outside the company anymore?\" A DLP policy moved to enforce mode yesterday.",
+     "Your manager asks: \"Is the Contoso migration on track for Friday?\" 180 of 220 mailboxes are synced. 40 are stuck at 95% on large items.",
+     "A client asks: \"Did we get hacked?\" One impossible-travel alert. The session came from the user's own VPN exit in Dallas.",
+     "A client asks: \"Why are we paying for 60 licenses with 52 people?\" 8 licenses sit on disabled accounts of former staff.",
+     "Your manager asks: \"Why is this ticket still open after three days?\" You're waiting on Microsoft. Case opened Monday at Sev B.",
+     "A client asks: \"Why does Outlook keep asking for my password?\" A token lifetime setting changed and the device is not hybrid joined.",
+     "The junior engineer asks: \"Should I run this script against all tenants?\" It's untested and has no WhatIf.",
+     "A client asks: \"Can you give our contractor Global Admin?\" He only needs to manage Teams."
+    ]},
+  pressure:{ min:12, difficulty:"Neutral",
+    lesson:"Pressure starts low. Your job at this level is to answer each question directly, give a time for anything you don't know, and end with an owner.",
+    scenarios:[
+     {role:"Client office manager, Brightwater",setup:"A new hire started today and has no Outlook. Her license failed to assign because the group has no usage location. You can fix it in 10 minutes.",opener:"Maria started today and she can't open Outlook. What's going on?",follow:["How long until she's working?","Why did this happen?","Will it happen with next week's hire?","What do you need from me?"]},
+     {role:"Your manager, weekly 1:1",setup:"You have 4 open P2 tickets. One is blocked on a Microsoft case, one on a client reply.",opener:"Walk me through your open P2s.",follow:["Which one worries you most?","What's blocking it?","When will it close?","What do you need from me?"]},
+     {role:"Client office manager, Northwind",setup:"Scan-to-email broke after this morning's MFA rollout. The scanner uses basic SMTP auth. Fix is SMTP relay through a connector.",opener:"Scan to email broke this morning. Did you guys do something?",follow:["Can you just turn MFA off for the scanner?","How long will it take?","Is this going to keep happening?","Who do I call if it breaks again?"]},
+     {role:"Microsoft support engineer",setup:"Users get AADSTS50105 signing in to an enterprise app since yesterday at 14:00. An assignment group was renamed yesterday.",opener:"Can you walk me through the exact error and when it started?",follow:["What changed around that time?","Have you tried clearing the browser cache?","Can you get me a HAR trace?","What's the business impact?"]}
+    ]},
+  vocab:{ min:10, explain:"Engineer version in 60 seconds, then manager version in 30.",
+    lesson:"Precise words make you sound certain because they are specific. Earn three words today by using each in your own MSP sentence out loud." },
+  bench:{ min:10, type:"60-second answer-first", limitSec:60,
+    lesson:"One take. No restarts. This is the number that tracks your progress, so treat it like a real call.",
+    prompts:[
+     "A client asks: \"Why are some emails going to junk since yesterday?\" A new DMARC policy is at quarantine and the marketing platform isn't DKIM signing.",
+     "Your manager asks: \"What happened with the password reset outage?\" SSPR writeback broke when the Entra Connect server rebooted. You restarted the sync service at 9:05.",
+     "A client asks: \"Why can't my new hire log into her laptop?\" She isn't in the group the device's Conditional Access policy requires.",
+     "A client asks: \"Why is OneDrive not syncing on 10 machines?\" A Known Folder Move GPO conflicts with the Intune profile.",
+     "Your manager asks: \"Why did we miss the backup alert?\" Alerts were going to a shared mailbox nobody monitors.",
+     "A client asks: \"Is it safe to click this Microsoft security email?\" It's a phishing lure. The sender domain doesn't match Microsoft."
+    ]},
+  gate:{ minSessions:8, fillers:1.5, hedges:1.5, tics:0, cf:3, freezes:1 }
+},
+{ n:2, name:"Control", tag:"Own the structure", weeks:"Weeks 4 to 6",
+  goal:"Status updates under 45 seconds. Even pace with short pauses. Full volume on the lines where you take ownership.",
+  structure:["Current state","Impact","What we're doing","Next update time"],
+  voice:{ min:10, lesson:"Your speed problem is bursts. Inside sentences you hit 160 to 190 words per minute, then freeze for 2 seconds. Target is an even 130 to 150 with pauses of half a second to one second. Your recordings show volume dropping 15 dB on ownership lines. Those lines have to land the loudest.",
+    steps:[["0:00","Breath reset, four rounds."],["1:00","Paced read. Read the passage in 30 seconds. Use the timer. Repeat until you land 28 to 32 seconds twice."],["4:00","Ownership lines. \"We missed this.\" \"That was my call.\" \"I own the fix.\" Say each at the volume of your first word. Record. Check trail-off."],["7:00","One-beat pauses. Talk 60 seconds on the topic. Every pause is one beat, never two. Record it. Freezes must read 0."]],
+    pass:"Zero freezes of 1.5 seconds or longer. Trail-off better than -4 dB." },
+  reps:{ min:12, lesson:"A status update answers four questions before anyone asks them. If you give all four in 45 seconds, nobody interrupts you. If you don't know something, say when you will.",
+    steps:[["0:00","Read the structure card and the not-knowing line."],["1:00","Prompt 1. 20 seconds prep. Deliver in 45 seconds or less. Record, dictate, score."],["4:30","Prompt 2."],["8:00","Prompt 3."],["11:00","Write the one fix."]],
+    pass:"All three under 45 seconds, all four parts present, a clock time for the next update.",
+    prompts:[
+     "Give the 9:30 status to the Tailspin ops lead. Teams calls drop for 30 users on one floor since 8:15. Licensing is ruled out. Network team is checking QoS.",
+     "Status on Intune enrollment: 22 of 60 new devices fail at the Enrollment Status Page. A required app is timing out.",
+     "Mid-incident status: a SharePoint site returns access denied to the whole Finance group since a permissions cleanup at 7:00.",
+     "The client wants an ETA you don't have. Microsoft hasn't responded to the Sev A case yet. Use the not-knowing line.",
+     "Close a 30-minute migration call. Decision: cutover moves to Saturday 6 AM. You run the batch. Client IT sends the user notice.",
+     "Status to your manager: a P2 is 3.5 hours into a 4-hour response window. First response wasn't sent because the queue was misrouted.",
+     "Status: 5 devices prompt for BitLocker recovery after a firmware update. Keys found in Entra for 4 of 5.",
+     "An exec asks: \"Is it just us?\" Service health shows an Exchange advisory for North America. You haven't confirmed it matches.",
+     "Close an internal call with the junior engineer. He owns the DLP policy test. You review it Thursday at 2:00. Recap goes to your manager.",
+     "Status: a phishing email hit 140 inboxes at 10:05. Purged at 10:22. Two users clicked. Their sessions are revoked.",
+     "A VP joins a mail outage bridge 70 minutes in. Give her the 30-second version.",
+     "The client wants to disable Security Defaults to fix one app. Disagree: goal, risk with a fact, alternative, ask for the decision."
+    ]},
+  pressure:{ min:12, difficulty:"Skeptical",
+    lesson:"Now they push back. Acknowledge in one short line, then return to facts. No over-explaining. Every answer ends with an owner or a time.",
+    scenarios:[
+     {role:"Client IT lead, Tailspin",setup:"Third Teams call-quality incident this month. This time you found a QoS policy missing on the new switch stack.",opener:"This is the third time this month. What's different this time?",follow:["Your last fix didn't hold. Why should I trust this one?","What's the ETA?","Is it our network or Microsoft?","What do I tell my VP?"]},
+     {role:"Your manager",setup:"A P2 on your queue breached its response SLA. Routing sent it to the wrong queue. You caught it at 4.5 hours.",opener:"That P2 blew its SLA. What happened?",follow:["Whose fault is it?","Why didn't you flag it earlier?","What stops this next time?","Do I need to tell the client?"]},
+     {role:"Client COO, Contoso",setup:"Mailbox cutover is Saturday 6 AM. 40 of 220 mailboxes are still syncing large items. Rollback is re-pointing MX, about 30 minutes.",opener:"Are we still good for Saturday?",follow:["What are the risks?","What happens if it fails?","How long is the rollback?","What do you need from my team?"]},
+     {role:"Microsoft support engineer",setup:"Messages to one partner domain are rejected. Your message trace shows the rejection at EOP, not your connectors.",opener:"This looks like a configuration issue on your side.",follow:["Did you check the transport rules?","We can't escalate without a repro.","Can you wait 72 hours for the backend team?","Is this really business critical?"]}
+    ]},
+  vocab:{ min:10, explain:"Engineer 60 seconds, manager 30, executive 15.",
+    lesson:"Use three words today and make one of them show up in a real call or ticket note." },
+  bench:{ min:10, type:"45-second status update", limitSec:45,
+    lesson:"Current state, impact, what we're doing, next update time. Under 45 seconds. One take.",
+    prompts:[
+     "Status: 50 users can't open Outlook since 7:50. Web access works. You're testing a profile rebuild on one machine.",
+     "Status: Autopilot fails for 8 of 20 devices at a new site. The hash upload batch timed out. Re-uploading now.",
+     "Status: external sharing blocked tenant-wide after a policy change at 6:00. Reverting now. Effect takes up to 1 hour.",
+     "Status: Sev A Microsoft case open for Exchange Online delays. 40-minute delivery lag. Advisory is posted.",
+     "Status: SSO to the client's HR app broke at the midnight certificate rollover. New cert uploaded. Testing with 3 users.",
+     "Status: 3 accounts hit by token theft. Sessions revoked at 11:10. Passwords reset. Checking mailbox rules now."
+    ]},
+  gate:{ minSessions:8, fillers:1.0, hedges:1.0, tics:0, cf:3, freezes:1, maxSec:45, confidence:4 }
+},
+{ n:3, name:"Command", tag:"Hold the room", weeks:"Weeks 7 to 9",
+  goal:"Run a hostile bridge. Hold your position without sounding defensive. Take the floor back when interrupted.",
+  structure:["Acknowledge","Fact","Alternative","Decision needed"],
+  voice:{ min:10, lesson:"Under pressure your pitch rises and your pace spikes. Command sounds like the opposite: lower, slower, fewer words. You hold the floor with pace and silence, not volume.",
+    steps:[["0:00","Physiological sigh. Double inhale through the nose, long exhale. Three rounds."],["1:00","Low-register read. Read the passage one step lower than normal. Fall on every full stop."],["4:00","Interrupt hold. Read the passage. At random points say \"Let me finish this point, then I'm yours.\" at the same pace, then continue. Five times."],["7:00","Silence tolerance. Ask a question out loud, wait a full 3 seconds without filling, continue. Five reps."]],
+    pass:"Five of five hold lines at even pace with no rise in pitch." },
+  reps:{ min:12, lesson:"Disagreement lands when it sounds like service, not defense. Name their goal, state the risk with one fact, give the alternative, ask them to decide.",
+    steps:[["0:00","Read the structure card and the pressure lines in the phrase bank."],["1:00","Prompt 1. 20 seconds prep. Answer in 60 seconds. Record, dictate, score."],["4:30","Prompt 2."],["8:00","Prompt 3."],["11:00","Write the one fix."]],
+    pass:"No apology for things that aren't yours. Every answer ends with a decision or an owner.",
+    prompts:[
+     "Three people are talking over each other on a bridge about DNS. Open the bridge and take control.",
+     "The client says: \"Your team caused this.\" Root cause isn't confirmed. Separate cause from fix.",
+     "The Microsoft engineer says it's on your side. Your message trace shows the rejection at EOP. Challenge with evidence.",
+     "Your manager wants the policy pushed to all devices tonight. You want a pilot group first. Disagree.",
+     "An exec wants a guaranteed ETA. Refuse to give a number you can't stand behind. Commit to when you'll have one.",
+     "A peer keeps raising an unrelated licensing issue on the bridge. Redirect.",
+     "Hand off three action items on a bridge with owners and a report-back time.",
+     "The client demands root cause in the next 10 minutes. You're 20 minutes into restoration.",
+     "Explain why the change caused the outage without blaming the client admin who made it.",
+     "The client threatens to escalate to your director. Hold position and keep the relationship.",
+     "Close a P1 bridge after restoration: decisions, owners, RCA date, next check-in.",
+     "Your last ETA was wrong. It slips 2 hours. Correct it cleanly."
+    ]},
+  pressure:{ min:12, difficulty:"Hostile",
+    lesson:"The other side is angry now. You don't match their energy and you don't shrink. Short sentences. Facts. Times. Owners.",
+    scenarios:[
+     {role:"Client VP of Sales",setup:"Outbound mail has been down 90 minutes. Root cause: an expired certificate on the outbound connector. Renewal in progress, propagation 20 to 40 minutes.",opener:"Ninety minutes. My sales team can't email customers. Give me a time.",follow:["That's not good enough. I want a real ETA.","Whose fault is this?","Why are we paying you?","I'm calling your director."]},
+     {role:"Client sysadmin",setup:"Their line-of-business app broke. The cause is their own change to a service account's MFA state, not your Conditional Access policy.",opener:"Your policy broke our line-of-business app.",follow:["You pushed it, not us.","Undo it now.","I want this in writing.","Your team never tests anything."]},
+     {role:"Your director",setup:"A P1 bridge has been open for 4 hours. You've ruled out licensing, DNS and CA. Microsoft engineering is engaged.",opener:"Why is this bridge still open after four hours?",follow:["Who's leading this?","What have you ruled out?","Should we bring in another engineer?","What is the customer hearing from us?"]},
+     {role:"Chaotic P1 bridge",setup:"Inbound mail down for the whole tenant. Client lead, a network engineer, a Microsoft engineer and an exec are on the call.",opener:"Client lead: \"Is it DNS?\" Network: \"Not us.\" Exec: \"I need an ETA.\"",follow:["Exec: I still don't have a time.","Microsoft: We see no service incident.","Client lead: Should we fail over to backup MX?","Exec: What do I tell the board?"]}
+    ]},
+  vocab:{ min:10, explain:"60, 30 and 15 seconds. At 30 seconds, answer the question \"So what do we do?\" without restarting.",
+    lesson:"At this level, the words have to show up under pressure. Use at least one in today's pressure rep." },
+  bench:{ min:10, type:"60-second hold under hostility", limitSec:60,
+    lesson:"Hold position without defending. Acknowledge, fact, alternative, decision. One take.",
+    prompts:[
+     "Client VP: \"Just roll it all back right now.\" Rolling back reopens a critical vulnerability.",
+     "Client: \"This is your fault.\" Root cause is a client-side DNS change. Say it without blaming.",
+     "Exec: \"I want an ETA in the next 60 seconds.\" You're waiting on Microsoft engineering.",
+     "Your manager: \"Skip the change ticket, just push it.\" The change freeze runs through Friday.",
+     "Client: \"We want your engineer off our account.\" He made a mistake you've already fixed.",
+     "Microsoft engineer: \"Closing the case, it's resolved on our side.\" Users still see the failure."
+    ]},
+  gate:{ minSessions:8, fillers:0.8, hedges:0.7, tics:0, cf:3, freezes:0, confidence:4, leadership:4 }
+},
+{ n:4, name:"Architect", tag:"Lead the decision", weeks:"Weeks 10 to 12",
+  goal:"Brief executives with a recommendation and a decision. Answer architect interview questions with design reasoning. Speak two minutes impromptu, clean.",
+  structure:["Conclusion","Business impact","Recommendation","Decision needed"],
+  voice:{ min:10, lesson:"At the executive level you're judged on how easy you are to follow. One stressed word per sentence. A half-beat pause before every number. The recommendation lands on the lowest note of the paragraph.",
+    steps:[["0:00","Breath reset, four rounds."],["1:00","Emphasis map. Pick one word per sentence in the passage. Read it stressing only those words."],["4:00","Number pause. Say five figures with a half-beat before each number: \"Cost drops by [pause] thirty percent.\""],["7:00","Two-minute impromptu on the topic. Vary pitch on purpose. Close on a falling recommendation. Record it."]],
+    pass:"Two-minute impromptu with zero fillers in the first and last 20 seconds." },
+  reps:{ min:12, lesson:"Executives buy decisions, not explanations. Lead with what you want them to decide, show the business effect in their numbers, and ask for the decision out loud.",
+    steps:[["0:00","Read the structure card."],["1:00","Prompt 1. 30 seconds prep. Answer in 90 seconds. Record, dictate, score."],["4:30","Prompt 2."],["8:00","Prompt 3."],["11:00","Write the one fix."]],
+    pass:"Each answer names the decision needed and a tradeoff.",
+    prompts:[
+     "Brief the Fabrikam CEO in 60 seconds: move from Security Defaults to Conditional Access with P1 licensing. One-time friction per user, added monthly license cost.",
+     "Leadership asks: should we consolidate 14 Intune compliance policies into one baseline? Recommend and name the decision.",
+     "Architect interview: \"Design an MFA rollout for 2,000 users with 30 shared kiosks.\"",
+     "Architect interview: \"Tell me about a time you disagreed with a senior engineer.\" Use a real example. Answer first.",
+     "Brief your director: a GDAP review across 40 tenants found 9 with Global Admin relationships. Recommend a least-privilege plan.",
+     "Explain to a CFO why a tenant-to-tenant migration needs a 3-week pilot.",
+     "Recommend renewing a third-party backup product or relying on native retention. State the tradeoff.",
+     "Architect interview: \"How would you standardize onboarding across 50 client tenants?\"",
+     "Post-incident summary to client leadership: 2-hour mail outage, root cause, contributing factor, prevention.",
+     "Pitch your director an automation that saves the team 6 hours a week. Ask for the time to build it.",
+     "Architect interview: \"Walk me through hybrid identity options and when you'd pick each.\"",
+     "Brief a board member: phishing campaign contained, 2 accounts compromised, what changes now."
+    ]},
+  pressure:{ min:12, difficulty:"Executive and panel",
+    lesson:"Executives and interview panels test whether you stay concise when challenged. Shorter answers under pressure read as senior.",
+    scenarios:[
+     {role:"Client CFO",setup:"You're recommending a licensing upgrade to close security gaps found in an assessment. The ask is roughly $30,000 a year.",opener:"You want thirty thousand for licensing. Why?",follow:["What happens if we say no?","Can't we do half?","What's the ROI?","Give me one line for the board."]},
+     {role:"Architect interview panel",setup:"You're interviewing for an M365 architect role.",opener:"Tell us why you're ready for an architect role.",follow:["Give me an example of a design decision you owned.","What would you do differently?","How do you handle a client who rejects your design?","Why pick you over someone with more certifications?"]},
+     {role:"Client CISO",setup:"The client is evaluating whether to trust your MSP with admin access across their tenant.",opener:"Walk me through why GDAP is enough for us to trust an MSP with our tenant.",follow:["What can your techs do without us knowing?","How do you audit it?","What if one of your engineers is compromised?","Would you put that in the contract?"]},
+     {role:"Client CEO after a second outage",setup:"Second outage this quarter. You have the RCA and a prevention plan with monitoring and a change window policy.",opener:"This is the second outage this quarter. Convince me not to move to another MSP.",follow:["Spare me the technical detail.","What will be different?","Who is accountable?","What do I get if it happens again?"]}
+    ]},
+  vocab:{ min:10, explain:"The 15-second executive version, then one sentence of recommendation.",
+    lesson:"Architect vocabulary is about tradeoffs and decisions. Use tradeoff, constraint or net effect in every rep today." },
+  bench:{ min:10, type:"90-second executive recommendation", limitSec:90,
+    lesson:"Conclusion, business impact, recommendation, decision needed. 90 seconds. One take.",
+    prompts:[
+     "Recommend retiring the on-prem Exchange hybrid for a 300-user client.",
+     "Recommend Windows 365 or new laptops for 40 seasonal staff.",
+     "Recommend enforcing phishing-resistant MFA for admins across all managed tenants.",
+     "Recommend a standard M365 security baseline sold as a service tier.",
+     "Architect interview close: \"Why you, and why now?\"",
+     "Recommend a 30-minute update cadence policy for every P1 bridge at your MSP."
+    ]},
+  gate:{ minSessions:8, fillers:0.5, hedges:0.5, tics:0, cf:3, freezes:0, allScores:4, vocab:15 }
+}
+];
+const BLOCKS=[
+ {id:"voice",name:"Voice Lab",sub:"Breath, pauses, falling tone"},
+ {id:"reps",name:"Structure Reps",sub:"Three short answers, scored"},
+ {id:"pressure",name:"Pressure Sim",sub:"Live role-play, one question at a time"},
+ {id:"vocab",name:"Words and Explain",sub:"Three phrase-bank words, one topic"},
+ {id:"bench",name:"Benchmark and Log",sub:"One recorded take that tracks your progress"}
+];
+const BASELINE={fillers:2.7,hedges:2.7,tics:7,cf:0.2,vocab:0,scores:{clarity:3,precision:2,confidence:2,credibility:4,brevity:3,leadership:2}};
+</script>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="config.js"></script>
+<script>
+/* ================= APP ================= */
+const $=(s,r=document)=>r.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const h=(html)=>{const t=document.createElement("template");t.innerHTML=html.trim();return t.content.firstElementChild;};
+const dk=(d=new Date())=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const TODAY=dk();
+let MICBLOCK=false;try{MICBLOCK=localStorage.getItem("cv-micblocked")==="1";}catch(e){}
+const S={micBlocked:MICBLOCK,db:null,sample:null,prog:{level:1},sessions:{},view:"today",touched:false,loaded:false,wq:Promise.resolve(),uid:0};
+const uid=()=>"u"+(++S.uid);
+const L=()=>LEVELS[Math.min(Math.max((S.prog.level||1),1),4)-1];
+
+function toast(msg){const t=$("#toast");t.textContent=msg;t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>t.hidden=true,2600);}
+
+/* ---------- text analysis (same term lists as voice-analyzer.py) ---------- */
+function countTerms(text,terms){const t=" "+String(text).toLowerCase().replace(/[^a-z' ]/g," ").replace(/\s+/g," ")+" ";const o={};let n=0;for(const k of terms){const re=new RegExp("(?<= )"+k.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"(?= )","g");const c=(t.match(re)||[]).length;if(c){o[k]=c;n+=c;}}return {n,detail:o};}
+function analyzeText(text){const words=(String(text).trim().match(/\S+/g)||[]).length;const f=countTerms(text,FILLERS),hd=countTerms(text,HEDGES),tc=countTerms(text,TICS);return {words,fillers:f.n,hedges:hd.n,tics:tc.n,fd:f.detail,hdd:hd.detail,f100:words?+(f.n/words*100).toFixed(1):0,h100:words?+(hd.n/words*100).toFixed(1):0};}
+
+/* ---------- session data ---------- */
+function sess(date=TODAY){if(!S.sessions[date])S.sessions[date]={date,level:S.prog.level||1,blocks:{},reps:[],vocabManual:[]};return S.sessions[date];}
+function saveSession(date=TODAY){S.touched=true;const doc=JSON.parse(JSON.stringify(sess(date)));if(doc.reps&&doc.reps.length>30)doc.reps=doc.reps.slice(-30);
+  if(!S.db){toast("Not saved: the log isn't connected in this view");return Promise.resolve();}
+  setSync("busy");S.wq=S.wq.then(()=>S.db.doc("sessions/"+date).set(doc)).then(()=>setSync("on",new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit"}))).catch(e=>{setSync("off");throw e;}).catch(e=>{console.warn(e);toast(e&&e.code==="quota_exceeded"?"Log is full. Delete old sessions in Log.":"Save failed. Try again.");});return S.wq;}
+function saveProg(){if(!S.db)return Promise.resolve();S.wq=S.wq.then(()=>S.db.doc("program/state").set(JSON.parse(JSON.stringify(S.prog)))).catch(e=>console.warn(e));return S.wq;}
+function sortedSessions(){return Object.values(S.sessions).sort((a,b)=>a.date<b.date?-1:1);}
+function levelSessions(level){return sortedSessions().filter(s=>s.level===level&&!s.baseline);}
+function dayIndex(){return levelSessions(S.prog.level||1).filter(s=>s.date<TODAY).length;}
+function programWeek(){const all=sortedSessions().filter(s=>!s.baseline);const first=all.length?all[0].date:TODAY;const d=(new Date(TODAY)-new Date(first))/864e5;return Math.floor(d/7)+1;}
+function dayStatus(s){if(!s||s.baseline)return "none";const b=s.blocks||{};const n=BLOCKS.filter(x=>b[x.id]).length;if(n===5)return "full";if(b.voice&&b.bench)return "min";return n?"part":"none";}
+function vocabSet(){const set=new Set();for(const s of sortedSessions()){(s.vocabManual||[]).forEach(w=>set.add(w));(s.reps||[]).forEach(r=>(r.fb&&r.fb.vocabUsed||[]).forEach(w=>set.add(String(w).toLowerCase().replace(/^./,c=>c.toUpperCase()))));}
+  const bank=new Set(WORDS.map(w=>w[0].toLowerCase()));return [...set].filter(w=>bank.has(w.toLowerCase()));}
+function avgScore(sc){if(!sc)return null;const v=Object.values(sc).map(Number).filter(x=>x>0);return v.length?+(v.reduce((a,b)=>a+b,0)/v.length).toFixed(1):null;}
+
+/* ---------- recorder ---------- */
+function makeRecorder(onUpdate){
+  let stream,ctx,an,buf,iv,mr,chunks=[],frames=[],t0=0,url=null;
+  return {
+    get on(){return !!iv;},
+    async start(){
+      ctx=new (window.AudioContext||window.webkitAudioContext)();const resumed=ctx.resume();
+      if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){try{ctx.close();}catch(e){}throw new Error("no-mic");}
+      try{stream=await Promise.race([navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}}),new Promise((_,rej)=>setTimeout(()=>rej(new Error("mic-timeout")),7000))]);}catch(e){try{ctx.close();}catch(x){}throw e;}
+      await resumed;
+      const src=ctx.createMediaStreamSource(stream);an=ctx.createAnalyser();an.fftSize=2048;src.connect(an);buf=new Float32Array(an.fftSize);
+      frames=[];chunks=[];t0=performance.now();
+      try{mr=new MediaRecorder(stream);mr.ondataavailable=e=>e.data.size&&chunks.push(e.data);mr.start();}catch(e){mr=null;}
+      iv=setInterval(()=>{an.getFloatTimeDomainData(buf);let s=0,pk=0;for(const x of buf){s+=x*x;pk=Math.max(pk,Math.abs(x));}const db=20*Math.log10(Math.sqrt(s/buf.length)+1e-9);frames.push({db,pk,f0:pitchOf(buf,ctx.sampleRate)});onUpdate&&onUpdate((performance.now()-t0)/1000,db);},50);
+    },
+    async stop(){
+      clearInterval(iv);iv=null;
+      if(mr&&mr.state!=="inactive"){await new Promise(r=>{mr.onstop=r;mr.stop();});}
+      stream&&stream.getTracks().forEach(t=>t.stop());try{ctx&&ctx.close();}catch(e){}
+      if(url)URL.revokeObjectURL(url);url=chunks.length?URL.createObjectURL(new Blob(chunks,{type:chunks[0].type||"audio/webm"})):null;
+      return analyzeFrames(frames,url);
+    }
+  };
+}
+function pitchOf(buf,sr){
+  const n=Math.floor(buf.length/2),x=new Float32Array(n);let e=0;for(let i=0;i<n;i++){x[i]=buf[2*i];e+=x[i]*x[i];}
+  if(Math.sqrt(e/n)<0.004)return 0;const fs=sr/2,minL=Math.floor(fs/400),maxL=Math.min(Math.floor(fs/70),n-2);
+  const cs=new Float32Array(maxL+1);let best=0;
+  for(let L=minL;L<=maxL;L++){let s=0,a=0,b=0;for(let i=0;i<n-L;i++){const p=x[i],q=x[i+L];s+=p*q;a+=p*p;b+=q*q;}const c=s/Math.sqrt(a*b+1e-12);cs[L]=c;if(c>best)best=c;}
+  if(best<0.6)return 0;for(let L=minL;L<=maxL;L++){if(cs[L]>=best*0.9&&cs[L]>=cs[L-1]&&cs[L]>=cs[L+1])return fs/L;}return 0;
+}
+function analyzeFrames(fr,url){
+  const dt=0.05;if(fr.length<10)return null;
+  const dbs=fr.map(f=>f.db).slice().sort((a,b)=>a-b);const noise=dbs[Math.floor(dbs.length*0.1)];const thr=Math.max(noise+10,-52);
+  const peak=20*Math.log10(Math.max(...fr.map(f=>f.pk))+1e-9);
+  let segs=[],cur=null;fr.forEach((f,i)=>{const sp=f.db>thr;if(sp){if(cur&&i-cur.e<=5)cur.e=i;else{cur={s:i,e:i};segs.push(cur);}}});
+  segs=segs.filter(s=>(s.e-s.s)*dt>=0.12);
+  if(!segs.length)return {sec:0,speechSec:0,pauses:0,longest:0,freezes:0,trailAvg:null,trailing:0,peak:+peak.toFixed(1),url};
+  const gaps=[];for(let i=1;i<segs.length;i++)gaps.push((segs[i].s-segs[i-1].e)*dt);
+  const pauses=gaps.filter(g=>g>=0.3);const trails=[];
+  for(const s of segs){const len=(s.e-s.s)*dt;if(len<0.8)continue;const all=fr.slice(s.s,s.e+1).map(f=>f.db);const tail=fr.slice(Math.max(s.s,s.e-5),s.e+1).map(f=>f.db);const m=a=>a.reduce((x,y)=>x+y,0)/a.length;trails.push(m(tail)-m(all));}
+  const sec=(segs[segs.length-1].e-segs[0].s)*dt;
+  const st=(a,b)=>12*Math.log2(a/b);const vf=fr.map(f=>f.f0||0).filter(v=>v>0).sort((a,b)=>a-b);
+  const rangeSt=vf.length>20?+st(vf[Math.floor(vf.length*0.9)],vf[Math.floor(vf.length*0.1)]).toFixed(1):null;
+  let fall=0,rise=0,flat=0;for(const s of segs){if((s.e-s.s)*dt<0.8)continue;const tail=fr.slice(Math.max(s.s,s.e-12),s.e+1).map(f=>f.f0||0).filter(v=>v>0);if(tail.length<4)continue;const k=Math.max(1,Math.floor(tail.length/3));const m=a=>a.reduce((x,y)=>x+y,0)/a.length;const d=st(m(tail.slice(-k)),m(tail.slice(0,k)));if(d<=-1)fall++;else if(d>=1)rise++;else flat++;}
+  const toneN=fall+rise+flat;
+  return {rangeSt,fall,rise,flat,toneN,falling:toneN?Math.round(fall/toneN*100):null,medianF0:vf.length?Math.round(vf[Math.floor(vf.length/2)]):null,sec:+sec.toFixed(1),speechSec:+(segs.reduce((a,s)=>a+(s.e-s.s)*dt,0)).toFixed(1),pauses:pauses.length,meanPause:pauses.length?+(pauses.reduce((a,b)=>a+b,0)/pauses.length).toFixed(2):0,longest:gaps.length?+Math.max(...gaps).toFixed(1):0,freezes:gaps.filter(g=>g>=1.5).length,trailAvg:trails.length?+(trails.reduce((a,b)=>a+b,0)/trails.length).toFixed(1):null,trailing:trails.filter(t=>t<-4).length,trailN:trails.length,peak:+peak.toFixed(1),url};
+}
+async function analyzeFile(file){
+  const AC=window.AudioContext||window.webkitAudioContext;const c=new AC();const ab=await file.arrayBuffer();
+  const buf=await new Promise((res,rej)=>{const p=c.decodeAudioData(ab,res,rej);if(p&&p.then)p.then(res,rej);});
+  const d=buf.getChannelData(0),w=Math.max(1,Math.round(buf.sampleRate*0.05)),fr=[];
+  for(let i=0;i+w<=d.length;i+=w){let s=0,pk=0;for(let j=i;j<i+w;j++){const x=d[j];s+=x*x;const a=x<0?-x:x;if(a>pk)pk=a;}const seg=d.subarray(i,Math.min(d.length,i+2048));fr.push({db:20*Math.log10(Math.sqrt(s/w)+1e-9),pk,f0:seg.length>=1024?pitchOf(seg,buf.sampleRate):0});}
+  try{c.close();}catch(e){}return analyzeFrames(fr,URL.createObjectURL(file));
+}
+function recorderPanel(onDone,opts={}){
+  const id=uid();const el=h(`<div class="rep-rec"><div class="row"><button class="rec" id="${id}-b" type="button">● Record</button><span class="mono muted" id="${id}-t">0:00</span>${opts.limit?`<span class="muted" style="font-size:13px">limit ${opts.limit}s</span>`:""}<div class="meter" id="${id}-m"><b></b></div><label class="upl" for="${id}-f">Upload a recording<input type="file" id="${id}-f" accept="audio/*,video/*,.m4a,.mp3,.wav,.webm"></label></div><div id="${id}-s" style="margin-top:8px"></div></div>`);
+  const b=$("#"+id+"-b",el),t=$("#"+id+"-t",el),out=$("#"+id+"-s",el);let rec=null;
+  const applyBlocked=()=>{if(!S.micBlocked)return;const hasTa=!!(opts.hasText);b.textContent=hasTa?"🎤 Dictate":"● Try mic";t.hidden=true;const mt=$("#"+id+"-m",el);if(mt)mt.hidden=true;const up=$(".upl",el);if(up)up.classList.add("uplbtn");
+    if(!el.querySelector(".mhint")){el.append(h(`<p class="mhint muted" style="font-size:13px;margin-top:6px">${hasTa?"Dictate: tap the mic key on your keyboard and speak. ":""}Full measurement: record in Voice Memos, Share, Save to Files, then Upload.</p>`));}};
+  el._applyBlocked=applyBlocked;applyBlocked();
+  const onFile=async(e)=>{const f=e.target.files&&e.target.files[0];if(!f)return;out.textContent="Measuring…";
+    try{const st=await analyzeFile(f);out.innerHTML="";if(st){out.append(statsView(st,opts.limit));onDone&&onDone(st);S.touched=true;}else out.textContent="Too short to measure.";}
+    catch(err){out.textContent="That file couldn't be read. Try an .m4a, .mp3 or .wav.";}e.target.value="";};
+  $("#"+id+"-f",el).onchange=onFile;
+  b.onclick=async()=>{
+    if(rec&&rec.on){b.disabled=true;stopSR(el);const st=await rec.stop();b.disabled=false;b.classList.remove("on");b.textContent="● Record again";const m0=$("#"+id+"-m b",el);if(m0)m0.style.width="0";$("#lamp").classList.remove("live");out.innerHTML="";if(st){out.append(statsView(st,opts.limit));onDone&&onDone(st);}else out.textContent="Too short to measure.";return;}
+    if(S.micBlocked&&!opts.hasText){S.micBlocked=false;try{localStorage.removeItem("cv-micblocked");}catch(x){}}
+    if(S.micBlocked&&opts.hasText){const ta=el.closest(".rep")&&el.closest(".rep").querySelector("textarea");if(ta){ta.focus();ta.scrollIntoView({block:"center"});toast("Tap the mic key on your keyboard and speak");return;}}
+    const mb=$("#"+id+"-m b",el);b.disabled=true;b.textContent="Asking for mic…";out.innerHTML="";try{rec=makeRecorder((s,db)=>{if(mb)mb.style.width=Math.max(0,Math.min(100,(db+60)/60*100))+"%";t.textContent=Math.floor(s/60)+":"+String(Math.floor(s%60)).padStart(2,"0");if(opts.limit&&s>opts.limit)t.style.color="var(--bad)";});await rec.start();startSR(el,opts);b.disabled=false;b.classList.add("on");b.textContent="■ Stop";t.style.color="";$("#lamp").classList.add("live");S.touched=true;}
+    catch(e){rec=null;b.disabled=false;b.textContent="● Record";
+      if(e&&(e.name==="NotAllowedError"||e.message==="mic-timeout"||e.message==="no-mic")){S.micBlocked=true;try{localStorage.setItem("cv-micblocked","1");}catch(x){}}
+      out.innerHTML=`<div class="fb"><div class="eyebrow">Mic permission is off for this site</div><p style="font-size:14px">iPhone: Settings, Safari, Microphone, Allow (or the aA menu, Website Settings). PC: click the lock icon left of the address, set Microphone to Allow, reload. Until then, Record switches to Dictate and Upload.</p></div>`;
+      document.querySelectorAll(".rep-rec").forEach(r=>r._applyBlocked&&r._applyBlocked());
+      const ta=opts.hasText&&el.closest(".rep")&&el.closest(".rep").querySelector("textarea");if(ta){ta.focus();ta.scrollIntoView({block:"center"});}}
+  };
+  return el;
+}
+function statsView(st,limit){
+  const cls=(ok,warn)=>ok?"good":(warn?"warn":"bad");
+  const tr=st.trailAvg;
+  const el=h(`<div><div class="stats">
+    <div class="stat ${limit?cls(st.sec<=limit,st.sec<=limit*1.2):""}"><b>${st.sec}s</b><span>spoken length</span></div>
+    <div class="stat ${cls(st.freezes===0,st.freezes===1)}"><b>${st.freezes}</b><span>freezes 1.5s+</span></div>
+    <div class="stat ${cls(st.longest<1.2,st.longest<1.5)}"><b>${st.longest}s</b><span>longest pause</span></div>
+    <div class="stat ${tr==null?"":cls(tr>-3,tr>-4)}"><b>${tr==null?"n/a":(tr>0?"+":"")+tr+" dB"}</b><span>avg trail-off</span></div>
+    <div class="stat ${st.toneN?cls(st.falling>=70,st.falling>=50):""}"><b>${st.toneN?st.fall+"/"+st.toneN:"n/a"}</b><span>statements falling${st.rise?" · "+st.rise+" rising":""}</span></div>
+    <div class="stat ${st.rangeSt==null?"":cls(st.rangeSt>=6,st.rangeSt>=4)}"><b>${st.rangeSt==null?"n/a":st.rangeSt+" st"}</b><span>pitch range (6-10 engaged)</span></div>
+    <div class="stat ${cls(st.peak>=-12,st.peak>=-18)}"><b>${st.peak} dB</b><span>mic peak</span></div>
+  </div>${st.peak<-12?`<p class="muted" style="font-size:13px;margin-top:6px">Mic level is low. Move closer or raise input. Aim for a peak between -12 and -3.</p>`:""}${st.url?`<audio controls src="${st.url}" style="width:100%;margin-top:8px"></audio>`:""}<p class="muted" style="font-size:12px;margin-top:6px">Measured in your browser: timing, volume, pitch and end-of-statement tone. Use it for trends. voice-analyzer.py stays the precise weekly check.</p></div>`);
+  return el;
+}
+
+
+/* ---------- live transcript (Web Speech API, where the browser has it) ---------- */
+function startSR(el,opts){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR||!opts.hasText||S.noLiveText)return;
+  const ta=el.closest(".rep")&&el.closest(".rep").querySelector("textarea");if(!ta)return;
+  try{const r=new SR();r.lang="en-US";r.continuous=true;r.interimResults=true;const base=ta.value?ta.value.trim()+" ":"";let fin="";
+    r.onresult=e=>{let interim="";for(let i=e.resultIndex;i<e.results.length;i++){const x=e.results[i];if(x.isFinal)fin+=x[0].transcript.trim()+" ";else interim+=x[0].transcript;}ta.value=(base+fin+interim).trim();ta.dispatchEvent(new Event("input"));};
+    r.onerror=ev=>{if(ev.error==="not-allowed"||ev.error==="service-not-allowed"){toast("Live transcript is off in this browser. Dictate after recording.");}};
+    r.onend=()=>{if(el._sr===r&&el._srOn){try{r.start();}catch(x){}}};
+    el._sr=r;el._srOn=true;r.start();}catch(e){}
+}
+function stopSR(el){if(el._sr){el._srOn=false;try{el._sr.stop();}catch(e){}el._sr=null;}}
+/* ---------- Claude calls ---------- */
+const PHRASES=WORDS.map(w=>w[0]).join(", ");
+function scorePrompt(ctx,text,loc,au){const lv=L();return `You are Daniel's executive and technical communication coach. Daniel is a Senior Microsoft 365 Engineer at an MSP. Hard coach: respectful and plain, no generic praise.
+Score one practice rep. It was spoken, then dictated or typed, so judge wording and structure. Delivery is not assessed.
+Level: ${lv.n} ${lv.name}. Exercise: ${ctx.type}. Required structure: ${ctx.structure.join(" > ")}. Time limit: ${ctx.limitSec||60} seconds.
+Scenario: ${ctx.prompt}
+His answer: """${text}"""
+Measured: ${loc.words} words, fillers ${loc.fillers}, hedges ${loc.hedges}, "go ahead and" ${loc.tics}${au?`, spoken length ${au.sec}s, freezes ${au.freezes}`:""}.
+Phrase bank terms: ${PHRASES}.
+Return JSON only in this shape:
+{"scores":{"clarity":1,"precision":1,"confidence":1,"credibility":1,"brevity":1,"leadership":1},"conclusionFirst":true,"biggestFix":"","rewrite":"","swap":{"weak":"","strong":""},"drill":"","vocabUsed":[]}
+Rules: scores are integers 1 to 5. biggestFix is one item in 2 or 3 sentences: what he did, why it cost him with this audience, what to do instead. rewrite is how a senior architect would say it out loud, in his voice, using only facts from the scenario and his answer (write [time] where a time is missing), with [PAUSE] [SLOW DOWN] [EMPHASIZE] [FALLING TONE] only where they matter. swap quotes a weak phrase he actually used. drill is one exercise with pass criteria, doable in 2 minutes. vocabUsed lists phrase bank terms he used correctly. No bold, no em dashes, no semicolons.`;}
+async function askJSON(prompt){if(!S.sample)throw {code:"not_granted"};return await S.sample.json(prompt,{modelTier:"default",cache:false});}
+function fbView(fb){const sc=fb.scores||{};const lab={clarity:"Clarity",precision:"Precision",confidence:"Confidence",credibility:"Tech",brevity:"Brevity",leadership:"Leadership"};
+  return h(`<div class="fb"><div class="scores">${Object.keys(lab).map(k=>lab[k]+" "+(sc[k]??"-")).join(" · ")} · Conclusion first: ${fb.conclusionFirst?"yes":"no"}</div>
+  <div><div class="eyebrow">Biggest fix</div><p>${esc(fb.biggestFix)}</p></div>
+  <div><div class="eyebrow">Say it like this</div><div class="rewrite">${esc(fb.rewrite)}</div></div>
+  ${fb.swap&&fb.swap.weak?`<div><div class="eyebrow">Swap</div><p>"${esc(fb.swap.weak)}" → "${esc(fb.swap.strong)}"</p></div>`:""}
+  <div><div class="eyebrow">Drill now</div><p>${esc(fb.drill)}</p></div></div>`);}
+function selfScoreForm(){const id=uid();const keys=[["clarity","Clarity"],["precision","Precision"],["confidence","Confidence"],["credibility","Tech"],["brevity","Brevity"],["leadership","Leadership"]];
+  const el=h(`<div class="fb"><div class="eyebrow">Score yourself, 1 to 5</div><div class="stats">${keys.map(([k,l])=>`<div><label for="${id}-${k}">${l}</label><select id="${id}-${k}" data-k="${k}">${[1,2,3,4,5].map(n=>`<option ${n===3?"selected":""}>${n}</option>`).join("")}</select></div>`).join("")}</div><label class="check"><input type="checkbox" id="${id}-cf"> I opened with the answer</label></div>`);
+  el.read=()=>{const scores={};el.querySelectorAll("select").forEach(s=>scores[s.dataset.k]=+s.value);return {scores,conclusionFirst:$("#"+id+"-cf",el).checked,self:true};};return el;}
+
+/* ---------- rep component ---------- */
+function repPanel(ctx){
+  const id=uid();let audio=null,fb=null,self=null,saved=false;
+  const el=h(`<div class="rep"><div class="eyebrow">${esc(ctx.label||"Rep")}</div><p class="prompt">${esc(ctx.prompt)}</p><div id="${id}-rec"></div>
+   <div><label for="${id}-txt">What you said</label><textarea id="${id}-txt" placeholder="Dictate it: Win+H on your PC, or the mic key on your phone keyboard. Or type it from memory, fillers included."></textarea></div>
+   <div id="${id}-loc" class="muted mono" style="font-size:13px"></div>
+   <div class="row"><button class="primary" id="${id}-score" type="button">Score with Claude</button><button id="${id}-self" type="button">Score myself</button><button id="${id}-save" type="button">Save rep</button></div>
+   <div id="${id}-fb"></div></div>`);
+  $("#"+id+"-rec",el).append(recorderPanel(st=>{audio=st;},{limit:ctx.limitSec,hasText:true}));
+  const txt=$("#"+id+"-txt",el),loc=$("#"+id+"-loc",el),fbBox=$("#"+id+"-fb",el);
+  const upd=()=>{const a=analyzeText(txt.value);if(!a.words){loc.textContent="";return a;}const wpm=audio&&audio.speechSec?Math.round(a.words/audio.sec*60):null;
+    loc.textContent=`${a.words} words · fillers ${a.fillers} (${a.f100}/100) · hedges ${a.hedges} (${a.h100}/100) · "go ahead and" ${a.tics}${wpm?` · ${wpm} wpm`:""}`;return a;};
+  txt.addEventListener("input",()=>{S.touched=true;upd();});
+  $("#"+id+"-score",el).onclick=async(e)=>{const a=upd();if(!a.words){toast("Add what you said first");return;}const b=e.currentTarget;b.disabled=true;b.textContent="Scoring…";
+    try{fb=await askJSON(scorePrompt(ctx,txt.value,a,audio));fbBox.innerHTML="";fbBox.append(fbView(fb));self=null;}
+    catch(err){if(err&&(err.code==="not_granted"||err.code==="sampling_disabled"||err.code==="not_declared")){toast("Add your Claude API key in Log, Settings to turn on scoring. Score yourself for now.");$("#"+id+"-self",el).click();}else toast(err&&err.code==="rate_limited"?"Too many requests. Wait a minute.":"Scoring failed. Try again.");}
+    b.disabled=false;b.textContent="Score again";};
+  $("#"+id+"-self",el).onclick=()=>{self=selfScoreForm();fbBox.innerHTML="";fbBox.append(self);};
+  $("#"+id+"-save",el).onclick=async()=>{const a=upd();if(!a.words&&!audio){toast("Record or add your answer first");return;}
+    const f=self?self.read():fb;const rep={block:ctx.block,prompt:ctx.prompt,text:txt.value,words:a.words,fillers:a.fillers,hedges:a.hedges,tics:a.tics,f100:a.f100,h100:a.h100,audio:audio?{...audio,url:undefined}:null,fb:f||null,ts:Date.now()};
+    const s=sess();s.level=S.prog.level||1;if(saved)s.reps.pop();s.reps.push(rep);
+    if(ctx.bench){s.bench={prompt:ctx.prompt,f100:a.f100,h100:a.h100,tics:a.tics,words:a.words,sec:audio?audio.sec:null,freezes:audio?audio.freezes:null,trail:audio?audio.trailAvg:null,falling:audio?audio.falling:null,range:audio?audio.rangeSt:null,cf:f?!!f.conclusionFirst:null,scores:f?f.scores:null};}
+    saved=true;await saveSession();toast(ctx.bench?"Benchmark saved":"Rep saved");ctx.onSaved&&ctx.onSaved();};
+  return el;
+}
+
+/* ---------- pressure sim ---------- */
+function simPanel(sc,difficulty){
+  const id=uid();let msgs=[],turn=0,done=false;const MAXT=sc.follow.length+1;
+  const el=h(`<div class="rep"><div class="eyebrow">${esc(difficulty)} · ${esc(sc.role)}</div><p class="muted" style="font-size:14px">${esc(sc.setup)}</p>
+   <div class="chat" id="${id}-c"></div><div id="${id}-rec"></div>
+   <div><label for="${id}-in">Your answer (say it out loud first, then dictate or type it)</label><textarea id="${id}-in" style="min-height:80px"></textarea></div>
+   <div class="row"><button class="primary" id="${id}-send" type="button">Send answer</button><button id="${id}-end" type="button">End and score</button></div><div id="${id}-fb"></div></div>`);
+  const chat=$("#"+id+"-c",el),inp=$("#"+id+"-in",el),fbBox=$("#"+id+"-fb",el),send=$("#"+id+"-send",el);
+  $("#"+id+"-rec",el).append(recorderPanel(null,{limit:45,hasText:true}));
+  const add=(who,text)=>{chat.append(h(`<div class="msg ${who==="me"?"me":"them"}"><span class="who" ${who==="me"?'style="color:#3a3000"':""}>${who==="me"?"You":esc(sc.role)}</span>${esc(text)}</div>`));chat.scrollTop=chat.scrollHeight;};
+  add("them",sc.opener);
+  const setup=`Role-play for speaking practice. You are: ${sc.role}. Difficulty: ${difficulty}. Situation, where Daniel is the MSP engineer: ${sc.setup}
+Rules: stay in character. One spoken line per turn, under 30 words. React to what Daniel actually said. If he hedges, dodges, apologizes for things that aren't his fault, or gives no time or owner, press harder on exactly that. Work through these follow-ups in order, adapting the wording: ${sc.follow.join(" | ")}. Never coach. Output only your line.
+You already opened with: "${sc.opener}"`;
+  send.onclick=async()=>{if(done)return;const a=inp.value.trim();if(!a){toast("Answer first");return;}S.touched=true;add("me",a);inp.value="";turn++;
+    if(!msgs.length)msgs.push({role:"user",content:setup+"\n\nDaniel: "+a});else msgs.push({role:"user",content:"Daniel: "+a});
+    if(turn>=MAXT){send.disabled=true;$("#"+id+"-end",el).click();return;}
+    send.disabled=true;send.textContent="…";
+    let line=sc.follow[turn-1];
+    if(S.sample){try{const r=await S.sample(msgs,{modelTier:"quick",cache:false});line=(r.text||line).trim().replace(/^["']|["']$/g,"");}catch(e){}}
+    msgs.push({role:"assistant",content:line});add("them",line);send.disabled=false;send.textContent="Send answer";};
+  $("#"+id+"-end",el).onclick=async(e)=>{if(!turn){toast("Answer at least once");return;}done=true;send.disabled=true;const b=e.currentTarget;b.disabled=true;b.textContent="Scoring…";
+    const transcript=[...chat.querySelectorAll(".msg")].map(m=>(m.classList.contains("me")?"Daniel: ":"Them: ")+m.childNodes[1].textContent).join("\n");
+    const mine=[...chat.querySelectorAll(".msg.me")].map(m=>m.childNodes[1].textContent).join(" ");const a=analyzeText(mine);
+    let fb=null;
+    try{fb=await askJSON(scorePrompt({type:"Pressure simulation, "+difficulty,structure:L().structure,prompt:sc.setup+" Transcript follows.\n"+transcript,limitSec:45},mine,a,null).replace('"vocabUsed":[]}','"vocabUsed":[],"weakest":""}')+"\nScore the whole exchange. rewrite should redo his weakest answer. weakest quotes that answer.");fbBox.append(fbView(fb));}
+    catch(err){const f=selfScoreForm();fbBox.append(f);fb=null;fbBox.append(h(`<button type="button" class="primary" style="margin-top:8px">Save sim</button>`));fbBox.lastChild.onclick=async()=>{const s=sess();s.reps.push({block:"pressure",prompt:sc.role,text:transcript,words:a.words,fillers:a.fillers,hedges:a.hedges,tics:a.tics,f100:a.f100,h100:a.h100,fb:f.read(),ts:Date.now()});await saveSession();toast("Sim saved");};b.textContent="Scored";return;}
+    const s=sess();s.level=S.prog.level||1;s.reps.push({block:"pressure",prompt:sc.role,text:transcript,words:a.words,fillers:a.fillers,hedges:a.hedges,tics:a.tics,f100:a.f100,h100:a.h100,fb,ts:Date.now()});await saveSession();toast("Sim scored and saved");b.textContent="Scored";};
+  return el;
+}
+
+/* ---------- timer ---------- */
+const TIMERS=[];
+function timerPanel(min,steps){
+  const id=uid();const total=min*60;let el0=0,start=null,iv=null;
+  const el=h(`<div><div class="timer"><span class="clock" id="${id}-c">${min}:00</span><button type="button" id="${id}-g">Start</button><button type="button" id="${id}-r">Reset</button><div class="tbar"><b id="${id}-p"></b></div></div>
+   <ol class="steps" style="margin-top:10px">${steps.map(s=>`<li data-at="${s[0]}"><span class="at">${s[0]}</span><span>${esc(s[1])}</span></li>`).join("")}</ol></div>`);
+  const clock=$("#"+id+"-c",el),go=$("#"+id+"-g",el),lis=[...el.querySelectorAll("li")];
+  const secs=lis.map(li=>{const [m,s]=li.dataset.at.split(":").map(Number);return m*60+s;});
+  const elapsed=()=>el0+(start?(Date.now()-start)/1000:0);
+  const pb=$("#"+id+"-p",el);const draw=()=>{const e=Math.min(elapsed(),total),r=Math.max(total-e,0);pb.style.width=(e/total*100)+"%";clock.textContent=Math.floor(r/60)+":"+String(Math.floor(r%60)).padStart(2,"0");let k=0;secs.forEach((s,i)=>{if(e>=s)k=i;});lis.forEach((li,i)=>li.classList.toggle("now",(start||el0>0)&&i===k));if(e>=total&&start){pause();beep();toast("Time. Mark the block done.");}};
+  const pause=()=>{if(start){el0+=(Date.now()-start)/1000;start=null;}clearInterval(iv);iv=null;go.textContent=el0>0?"Resume":"Start";};
+  const run=()=>{TIMERS.forEach(t=>t!==api&&t.pause());start=Date.now();iv=setInterval(draw,250);go.textContent="Pause";S.touched=true;};
+  go.onclick=()=>start?pause():run();$("#"+id+"-r",el).onclick=()=>{pause();el0=0;go.textContent="Start";draw();};
+  const api={pause};TIMERS.push(api);return el;
+}
+function beep(){try{const c=new (window.AudioContext||window.webkitAudioContext)();const o=c.createOscillator(),g=c.createGain();o.frequency.value=660;g.gain.value=.08;o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+.35);setTimeout(()=>c.close(),600);}catch(e){}}
+
+/* ---------- TODAY ---------- */
+function pick(arr,i){return arr[((i%arr.length)+arr.length)%arr.length];}
+function renderToday(){
+  TIMERS.length=0;const v=$("#v-today");v.innerHTML="";const lv=L(),di=dayIndex(),s=S.sessions[TODAY],st=dayStatus(s);
+  const isDone=id=>!!(s&&s.blocks&&s.blocks[id]);
+  const firstOpen=BLOCKS.find(b=>!isDone(b.id));
+  const grid=h(`<div class="today-grid"></div>`);v.append(grid);
+  grid.append(h(`<div class="next"><span class="eyebrow">Level ${lv.n} · ${esc(lv.name)} · day ${di+1} at this level · program week ${programWeek()}</span>
+    <h2 id="nextline">${firstOpen?"Next: "+esc(firstOpen.name):"Session complete. Log is saved."}</h2>
+    <span class="goal">${esc(lv.goal)}</span><div class="segs" id="segs">${BLOCKS.map(b=>`<i class="${isDone(b.id)?"on":""}" title="${esc(b.name)}"></i>`).join("")}</div>
+    <div class="pills"><span class="pill ${st==="full"?"good":st==="min"?"warn":""}" id="daypill">${dayPillText(st)}</span><span class="pill">Short day: Voice Lab + Benchmark, 20 min</span></div></div>`));
+  if(!S.db&&S.loaded)grid.append(h(`<div class="banner" style="margin:0">Not signed in, so reps won't save. Sign in from the Log tab.</div>`));
+  const rail=h(`<aside class="rail" aria-label="Session blocks"><div class="railhead eyebrow">Today's session</div><div class="stepper" id="stepper">${BLOCKS.map((b,i)=>`<button type="button" data-go="${b.id}" class="${isDone(b.id)?"done":""}${firstOpen&&firstOpen.id===b.id?" cur":""}"><span class="sn">${isDone(b.id)?"✓":i+1}</span><span class="sl">${esc(b.name)}</span><span class="sm mono">${lv[b.id].min}m</span></button>`).join("")}</div><p class="railinfo muted">Tap a block to jump to it. Only one block stays open at a time.</p></aside>`);
+  rail.addEventListener("click",e=>{const bt=e.target.closest("[data-go]");if(bt)goBlock(bt.dataset.go);});
+  grid.append(rail);
+  const list=h(`<div class="blocks"></div>`);grid.append(list);
+  BLOCKS.forEach((b,i)=>list.append(blockCard(b,i,lv,di,s,firstOpen&&firstOpen.id===b.id)));
+  list.addEventListener("toggle",e=>{const d=e.target;if(!d.matches||!d.matches("details.block")||!d.open)return;list.querySelectorAll("details.block[open]").forEach(o=>{if(o!==d)o.open=false;});setCur(d.dataset.b);},true);
+}
+function dayPillText(st){return st==="full"?"Full day done":st==="min"?"Minimum day met":"Full day: 5 blocks, about 55 min";}
+function setCur(id){const sp=$("#stepper");if(!sp)return;sp.querySelectorAll("button").forEach(x=>x.classList.toggle("cur",x.dataset.go===id));const c=sp.querySelector(".cur");if(c&&sp.scrollWidth>sp.clientWidth)sp.scrollTo({left:c.offsetLeft-16,behavior:"smooth"});}
+function goBlock(id){const d=document.querySelector(`details.block[data-b="${id}"]`);if(!d)return;d.open=true;setCur(id);
+  const reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;requestAnimationFrame(()=>d.scrollIntoView({behavior:reduce?"auto":"smooth",block:"start"}));}
+function blockCard(b,i,lv,di,s,open){
+  const cfg=lv[b.id];const done=!!(s&&s.blocks&&s.blocks[b.id]);const id=uid();
+  const el=h(`<details class="block ${done?"done":""}" data-b="${b.id}" ${open?"open":""}><summary><span class="bnum">${done?"✓":i+1}</span><span class="btitle"><h3>${esc(b.name)}</h3><small>${esc(b.sub)}</small></span><span class="bmin">${cfg.min} min</span></summary><div class="bbody"></div></details>`);
+  const body=$(".bbody",el);body.append(h(`<p class="lesson">${esc(cfg.lesson)}</p>`));
+  const steps=cfg.steps||({pressure:[["0:00","Read the situation. Plan your first line in 30 seconds."],["1:00","Run the sim. Say each answer out loud, then send the gist. One question at a time."],["9:00","End and score. Read the biggest fix."],["11:00","Redo your weakest answer out loud once, using the rewrite."]],
+    vocab:[["0:00","Words. For each word read the example, then say your own MSP sentence out loud twice. Type one and check it."],["4:00","Explain. "+cfg.explain+" Record the shortest version."],["9:00","Tick the words you used today without prompting."]],
+    bench:[["0:00","Read the prompt. 20 seconds to prepare."],["0:30","Record one take. No restarts."],["2:00","Dictate or type what you said. Score it."],["6:00","Save the benchmark. On Fridays also run voice-analyzer.py on the file and paste the output in Log."]]})[b.id];
+  const tmr=timerPanel(cfg.min,steps);
+  if(b.id==="voice"){const cy=di;body.append(h(`<div class="material"><div class="eyebrow">Pause drill passage</div>${esc(pick(PASSAGES,cy))}</div>`));
+    body.append(h(`<div class="material"><div class="eyebrow">Falling-tone lines</div><ul>${[0,1,2,3,4].map(k=>`<li>${esc(pick(FALL_LINES,cy*5+k))}</li>`).join("")}</ul></div>`));
+    body.append(h(`<div class="material"><div class="eyebrow">60-second topic</div>${esc(pick(BUZZ,cy))}</div>`));
+    const chk=h(`<div class="rep"><div class="eyebrow">Check a take</div></div>`);chk.append(recorderPanel(null,{limit:60}));body.append(chk);}
+  if(b.id==="reps"){body.append(h(`<div class="material"><div class="eyebrow">Structure</div>${lv.structure.map(esc).join(" → ")}${lv.n>=2?`<br><span class="muted" style="font-size:14px">Not knowing: "I don't have that confirmed yet. I'll have it by [time]."</span>`:""}</div>`));
+    [0,1,2].forEach(k=>body.append(repPanel({block:"reps",label:"Prompt "+(k+1),prompt:pick(cfg.prompts,di*3+k),type:"Structure rep",structure:lv.structure,limitSec:lv.n===2?45:lv.n===4?90:60})));}
+  if(b.id==="pressure"){let k=di;const holder=h(`<div></div>`);const draw=()=>{const sc=pick(cfg.scenarios,k);holder.innerHTML="";holder.append(simPanel(sc,cfg.difficulty));};draw();
+    const sw=h(`<button type="button">Different scenario</button>`);sw.onclick=()=>{k++;draw();};body.append(holder);body.append(h(`<div class="row"></div>`));body.lastChild.append(sw);}
+  if(b.id==="vocab"){const words=[0,1,2].map(k=>pick(WORDS,di*3+k));
+    words.forEach(w=>{const wid=uid();const c=h(`<div class="rep"><div class="eyebrow">Word</div><h3>${esc(w[0])}</h3><p class="muted">${esc(w[1])}</p><label for="${wid}">Your sentence</label><input id="${wid}" type="text" placeholder="Use it in a sentence from your own calls"><div class="row"><button type="button">Check with Claude</button></div><div class="wfb"></div></div>`);
+      c.querySelector("button").onclick=async(e)=>{const val=$("#"+wid,c).value.trim();if(!val){toast("Write your sentence first");return;}const bt=e.currentTarget;bt.disabled=true;bt.textContent="Checking…";
+        try{const r=await askJSON(`Word drill for an MSP engineer. Term: ${w[0]}. Model usage: ${w[1]}. His sentence: "${val}". Is the term used correctly and naturally for a client or bridge call? Return JSON only: {"ok":true,"note":"one plain sentence, no praise","better":"a sharper version of his sentence"}. No em dashes, no semicolons.`);
+          $(".wfb",c).innerHTML="";$(".wfb",c).append(h(`<div class="fb"><span class="pill ${r.ok?"good":"bad"}">${r.ok?"Correct use":"Misused"}</span><p>${esc(r.note)}</p><p class="rewrite">${esc(r.better)}</p></div>`));}
+        catch(err){toast("Add your Claude API key in Log, Settings to check words.");}
+        bt.disabled=false;bt.textContent="Check again";};body.append(c);});
+    const topic=pick(TOPICS,di);body.append(h(`<div class="material"><div class="eyebrow">Explain today</div><strong style="font-weight:600">${esc(topic)}</strong><br>${esc(cfg.explain)}</div>`));
+    const rp=h(`<div class="rep"><div class="eyebrow">Record the explanation</div></div>`);rp.append(recorderPanel(null,{limit:60}));body.append(rp);
+    const cur=new Set((S.sessions[TODAY]&&S.sessions[TODAY].vocabManual)||[]);
+    const used=h(`<div class="rep"><div class="eyebrow">Words you used today without prompting</div><div class="row">${WORDS.map(w=>`<label class="check" style="min-height:36px;font-size:14px;margin-right:6px"><input type="checkbox" value="${esc(w[0])}" ${cur.has(w[0])?"checked":""}>${esc(w[0])}</label>`).join("")}</div></div>`);
+    used.addEventListener("change",()=>{const s=sess();s.vocabManual=[...used.querySelectorAll("input:checked")].map(i=>i.value);saveSession();});body.append(used);}
+  if(b.id==="bench"){body.append(h(`<div class="material"><div class="eyebrow">Benchmark · ${esc(cfg.type)}</div>Structure: ${lv.structure.map(esc).join(" → ")}</div>`));
+    body.append(repPanel({block:"bench",bench:true,label:"Today's benchmark",prompt:pick(cfg.prompts,di),type:cfg.type,structure:lv.structure,limitSec:cfg.limitSec}));}
+  body.querySelector(".lesson").after(tmr);
+  body.append(h(`<div class="pass"><strong style="font-weight:600">Pass:</strong> ${esc(cfg.pass||"Complete the block on the timer.")}</div>`));
+  const dn=h(`<label class="check"><input type="checkbox" ${done?"checked":""}> Block done</label>`);
+  dn.querySelector("input").onchange=async(e)=>{const s2=sess();s2.level=S.prog.level||1;s2.blocks=s2.blocks||{};s2.blocks[b.id]=e.target.checked;el.classList.toggle("done",e.target.checked);$(".bnum",el).textContent=e.target.checked?"✓":i+1;
+    await saveSession();refreshTodayStatus();if(e.target.checked){try{navigator.vibrate&&navigator.vibrate(30);}catch(x){}const nx=BLOCKS.slice(i+1).find(x=>!(sess().blocks||{})[x.id]);if(nx)goBlock(nx.id);else{el.open=false;window.scrollTo({top:0,behavior:"smooth"});toast("Session complete. Saved.");}}};
+  body.append(dn);
+  const nb=BLOCKS[i+1];const nbtn=h(`<button type="button" class="nextbtn">${nb?"Next: "+esc(nb.name)+" →":"↑ Back to top"}</button>`);nbtn.onclick=()=>nb?goBlock(nb.id):window.scrollTo({top:0,behavior:"smooth"});body.append(nbtn);return el;
+}
+function refreshTodayStatus(){const s=S.sessions[TODAY],st=dayStatus(s);const p=$("#daypill");if(p){p.className="pill "+(st==="full"?"good":st==="min"?"warn":"");p.textContent=dayPillText(st);}
+  const sp=$("#stepper");if(sp)sp.querySelectorAll("button").forEach((x,i)=>{const d=!!(s&&s.blocks&&s.blocks[x.dataset.go]);x.classList.toggle("done",d);x.querySelector(".sn").textContent=d?"✓":i+1;});
+  const sg=$("#segs");if(sg)[...sg.children].forEach((x,i)=>x.classList.toggle("on",!!(s&&s.blocks&&s.blocks[BLOCKS[i].id])));const f=BLOCKS.find(b=>!(s&&s.blocks&&s.blocks[b.id]));const n=$("#nextline");if(n)n.textContent=f?"Next: "+f.name:"Session complete. Log is saved.";}
+
+/* ---------- PROGRESS ---------- */
+function benchPoints(){return sortedSessions().filter(s=>s.bench||s.analyzer).map(s=>{const a=s.analyzer||{},b=s.bench||{};return {date:s.date,level:s.level,baseline:!!s.baseline,
+  f100:a.f100!=null?a.f100:b.f100,h100:a.h100!=null?a.h100:b.h100,score:avgScore(b.scores),falling:a.falling!=null?a.falling:b.falling,freezes:a.freezes!=null?a.freezes:b.freezes,sec:b.sec,cf:b.cf,scores:b.scores,tics:a.tics!=null?a.tics:b.tics};});}
+function chart(title,pts,key,opts){
+  const data=pts.filter(p=>p[key]!=null&&isFinite(p[key]));const W=340,H=170,pl=34,pr=12,pt=14,pb=26;
+  const ys=data.map(p=>p[key]).concat([opts.target,opts.base].filter(x=>x!=null));const ymax=opts.max!=null?opts.max:Math.max(1,...ys)*1.15,ymin=opts.min||0;
+  const X=i=>pl+(data.length<2?(W-pl-pr)/2:i*(W-pl-pr)/(data.length-1)),Y=v=>pt+(1-(v-ymin)/(ymax-ymin))*(H-pt-pb);
+  const ticks=[ymin,ymin+(ymax-ymin)/2,ymax];
+  let svg=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(title)}">`;
+  ticks.forEach(t=>{svg+=`<line x1="${pl}" x2="${W-pr}" y1="${Y(t)}" y2="${Y(t)}" stroke="var(--line)" stroke-width="1"/><text x="${pl-6}" y="${Y(t)+4}" text-anchor="end" font-size="10" fill="var(--muted)" font-family="IBM Plex Mono,monospace">${+t.toFixed(1)}</text>`;});
+  if(opts.target!=null)svg+=`<line x1="${pl}" x2="${W-pr}" y1="${Y(opts.target)}" y2="${Y(opts.target)}" stroke="var(--good)" stroke-dasharray="4 4" stroke-width="1.5"/>`;
+  if(opts.base!=null)svg+=`<line x1="${pl}" x2="${W-pr}" y1="${Y(opts.base)}" y2="${Y(opts.base)}" stroke="var(--bad)" stroke-dasharray="2 4" stroke-width="1.5"/>`;
+  if(data.length){const d=data.map((p,i)=>(i?"L":"M")+X(i).toFixed(1)+" "+Y(p[key]).toFixed(1)).join(" ");
+    svg+=`<path d="${d} L ${X(data.length-1)} ${Y(ymin)} L ${X(0)} ${Y(ymin)} Z" fill="var(--accent)" opacity=".10"/><path d="${d}" fill="none" stroke="var(--accent)" stroke-width="2"/>`;
+    data.forEach((p,i)=>{const last=i===data.length-1;svg+=`<circle cx="${X(i)}" cy="${Y(p[key])}" r="${last?4.5:2.5}" fill="${last?"var(--accent)":"var(--surface)"}" stroke="var(--accent)" stroke-width="1.5"><title>${p.date}: ${p[key]}</title></circle>`;});
+    svg+=`<text x="${pl}" y="${H-6}" font-size="10" fill="var(--muted)" font-family="IBM Plex Mono,monospace">${data[0].date.slice(5)}</text><text x="${W-pr}" y="${H-6}" text-anchor="end" font-size="10" fill="var(--muted)" font-family="IBM Plex Mono,monospace">${data[data.length-1].date.slice(5)}</text>`;}
+  else svg+=`<text x="${(W+pl)/2}" y="${H-pb-8}" text-anchor="middle" font-size="12" fill="var(--muted)">No data yet. Save a benchmark.</text>`;
+  svg+="</svg>";const last=data.length?data[data.length-1][key]:null;
+  return h(`<div class="card chart"><div class="row" style="justify-content:space-between"><h3>${esc(title)}</h3><span class="mono" style="font-size:18px">${last==null?"-":last+(opts.unit||"")}</span></div>${svg}<div class="legend"><span style="color:var(--accent)">you</span>${opts.base!=null?`<span style="color:var(--bad)">baseline ${opts.base}</span>`:""}${opts.target!=null?`<span style="color:var(--good)">level target ${opts.target}</span>`:""}</div></div>`);
+}
+function gateEval(){
+  const lv=L(),g=lv.gate,ss=levelSessions(lv.n),bp=ss.filter(s=>s.bench).slice(-3).map(s=>({...s.bench,analyzer:s.analyzer}));const n3=bp.length>=3;
+  const avg=(f)=>bp.length?bp.reduce((a,b)=>a+(f(b)??0),0)/bp.length:null;
+  const fv=b=>b.analyzer&&b.analyzer.f100!=null?b.analyzer.f100:b.f100,hv=b=>b.analyzer&&b.analyzer.h100!=null?b.analyzer.h100:b.h100;
+  const R=[];const add=(label,ok,val,pend)=>R.push({label,ok,val,pending:pend===undefined?(!ok&&!n3):pend});
+  add(`Sessions at this level: ${g.minSessions}`,ss.length>=g.minSessions,`${ss.length}/${g.minSessions}`,ss.length<g.minSessions);
+  const f=avg(fv),hh=avg(hv);
+  add(`Fillers ≤ ${g.fillers} per 100 words (last 3 benchmarks)`,n3&&f<=g.fillers,f==null?"-":f.toFixed(1));
+  add(`Hedges ≤ ${g.hedges} per 100 words`,n3&&hh<=g.hedges,hh==null?"-":hh.toFixed(1));
+  add(`"Go ahead and" zero in all 3`,n3&&bp.every(b=>!b.tics),bp.length?bp.map(b=>b.tics||0).join(" "):"-");
+  add(`Conclusion first in ${g.cf} of 3`,n3&&bp.filter(b=>b.cf).length>=g.cf,`${bp.filter(b=>b.cf).length}/3`);
+  const fz=avg(b=>b.freezes);add(`Freezes ≤ ${g.freezes} per take`,n3&&fz!=null&&bp.every(b=>b.freezes!=null)&&fz<=g.freezes,fz==null?"-":fz.toFixed(1));
+  if(g.maxSec)add(`Every take ≤ ${g.maxSec} seconds`,n3&&bp.every(b=>b.sec!=null&&b.sec<=g.maxSec),bp.map(b=>b.sec??"-").join(" "));
+  if(g.confidence){const c=avg(b=>b.scores&&b.scores.confidence);add(`Confidence score ≥ ${g.confidence}`,n3&&c>=g.confidence,c==null?"-":c.toFixed(1));}
+  if(g.leadership){const c=avg(b=>b.scores&&b.scores.leadership);add(`Leadership score ≥ ${g.leadership}`,n3&&c>=g.leadership,c==null?"-":c.toFixed(1));}
+  if(g.allScores){const ok=n3&&bp.every(b=>b.scores&&Object.values(b.scores).every(x=>x>=g.allScores));add(`All six scores ≥ ${g.allScores} on each take`,ok,ok?"yes":"no");}
+  if(g.vocab){const v=vocabSet().length;add(`Active vocabulary ≥ ${g.vocab} words`,v>=g.vocab,String(v),v<g.vocab);}
+  return {rows:R,pass:R.every(r=>r.ok)};
+}
+function renderProgress(){
+  const v=$("#v-progress");v.innerHTML="";const lv=L(),pts=benchPoints(),g=lv.gate;
+  const ge=gateEval();
+  const gc=h(`<div class="card"><div class="row" style="justify-content:space-between"><h2>Level ${lv.n} gate</h2><span class="pill ${ge.pass?"good":""}">${ge.pass?"Ready to advance":"In progress"}</span></div>
+    <p class="muted" style="font-size:14px">You move up when you pass the gate, not when the calendar says so.</p><ul class="gate">${ge.rows.map(r=>`<li><span>${esc(r.label)}</span><span class="mono pill ${r.ok?"good":r.pending?"neutral":"bad"}">${esc(r.ok?"✓ "+r.val:(r.val==="-"||r.val===""?"no data":r.val))}</span></li>`).join("")}</ul><p class="muted" style="font-size:13px">Grey means not enough benchmarks yet. Red means you have the data and it misses the target.</p></div>`);
+  if(ge.pass&&lv.n<4){const b=h(`<button class="primary" type="button">Advance to Level ${lv.n+1}</button>`);b.onclick=async()=>{S.prog.level=lv.n+1;S.prog.history=(S.prog.history||[]).concat([{level:lv.n+1,date:TODAY}]);await saveProg();toast("Level "+(lv.n+1)+" unlocked");applyLevel();};gc.append(b);}
+  if(ge.pass&&lv.n===4)gc.append(h(`<p class="pass">Pro gate passed. Switch to maintenance: three sessions a week, one of them from a real call recording.</p>`));
+  v.append(gc);
+  const vs=vocabSet();
+  const tiles=h(`<div class="stats"><div class="stat"><b>${sortedSessions().filter(s=>!s.baseline&&dayStatus(s)!=="none").length}</b><span>training days</span></div><div class="stat"><b>${streak()}</b><span>day streak</span></div><div class="stat"><b>${vs.length}</b><span>active words</span></div><div class="stat"><b>${sortedSessions().reduce((a,s)=>a+((s.reps||[]).length),0)}</b><span>scored reps</span></div></div>`);
+  v.append(tiles);
+  const ch=h(`<div class="charts"></div>`);
+  ch.append(chart("Fillers per 100 words",pts,"f100",{base:BASELINE.fillers,target:g.fillers}));
+  ch.append(chart("Hedges per 100 words",pts,"h100",{base:BASELINE.hedges,target:g.hedges}));
+  ch.append(chart("Average rep score",pts,"score",{min:1,max:5,base:+(avgScore(BASELINE.scores)).toFixed(1),target:4}));
+  ch.append(chart("Falling tone, % of statements",pts,"falling",{min:0,max:100,target:lv.n>=2?70:60,unit:"%"}));
+  v.append(ch);
+  v.append(h(`<p class="muted" style="font-size:13px">Fillers and hedges use voice-analyzer.py numbers when you paste them in Log, otherwise your dictated text. Dictation drops some fillers, so treat text counts as a floor.</p>`));
+  v.append(calendar());
+}
+function streak(){let n=0;const d=new Date();for(let i=0;i<400;i++){const k=dk(d);const st=dayStatus(S.sessions[k]);if(st==="full"||st==="min")n++;else if(i>0){const wd=d.getDay();if(wd!==0&&wd!==6)break;}d.setDate(d.getDate()-1);}return n;}
+function calendar(){const d=new Date();const dow=(d.getDay()+6)%7;d.setDate(d.getDate()-dow-7*11);let cells="";for(let i=0;i<84;i++){const k=dk(d);const st=dayStatus(S.sessions[k]);cells+=`<i class="${st==="full"?"full":st==="min"||st==="part"?"min":""} ${k===TODAY?"today":""}" title="${k}"></i>`;d.setDate(d.getDate()+1);}
+  return h(`<div class="card"><h3>Last 12 weeks</h3><p class="muted" style="font-size:13px">Each column is a week, Monday at the top.</p><div class="calwrap"><div class="cal">${cells}</div></div><div class="legend" style="gap:10px"><span style="color:var(--good)">full day</span><span style="color:color-mix(in srgb,var(--good) 45%,var(--muted))">minimum or partial</span></div><p class="muted" style="font-size:13px">Weekends don't break the streak.</p></div>`);}
+
+/* ---------- PLAN ---------- */
+function gateText(g){const a=[`${g.minSessions}+ sessions at the level`,`fillers ≤ ${g.fillers}/100`,`hedges ≤ ${g.hedges}/100`,`zero "go ahead and"`,`conclusion first 3 of 3`,`freezes ≤ ${g.freezes}`];if(g.maxSec)a.push(`every take ≤ ${g.maxSec}s`);if(g.confidence)a.push(`confidence ≥ ${g.confidence}`);if(g.leadership)a.push(`leadership ≥ ${g.leadership}`);if(g.allScores)a.push(`all six scores ≥ ${g.allScores}`);if(g.vocab)a.push(`${g.vocab} active words`);return a.join(" · ");}
+function renderPlan(){
+  const v=$("#v-plan");v.innerHTML="";
+  v.append(h(`<div class="card"><h2>How this works</h2><ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px">
+   <li>Five blocks a day, 10 to 12 minutes each, about 55 minutes. Same order every day. Prompts rotate.</li>
+   <li>Short on time: Voice Lab plus Benchmark, 20 minutes. That keeps the streak.</li>
+   <li>Train five days a week. Friday: run voice-analyzer.py on the benchmark recording and paste the output in Log. That's your precise weekly number.</li>
+   <li>Levels unlock by gate, measured on your last three benchmarks. Twelve weeks is the fast track if you pass each gate on schedule.</li>
+   <li>Once a week, bring one real call or recording to the Speaking Coach project for a Debrief. Practice only counts if it shows up on real calls.</li>
+   <li>Works on iPhone and PC with one synced log. Record in the app, or upload a Voice Memo. To dictate, use the mic key on the iPhone keyboard or Win+H on the PC.</li></ul></div>`));
+  LEVELS.forEach(l=>v.append(h(`<div class="lvl ${l.n===(S.prog.level||1)?"cur":""}"><span class="n">${l.n}</span><div><span class="eyebrow">${esc(l.weeks)}</span><h3>${esc(l.name)} · ${esc(l.tag)}</h3></div><p style="font-size:14px">${esc(l.goal)}</p>
+    <div style="font-size:14px"><span class="muted">Structure:</span> ${l.structure.map(esc).join(" → ")}<br><span class="muted">Benchmark:</span> ${esc(l.bench.type)}<br><span class="muted">Pressure:</span> ${esc(l.pressure.difficulty)}<br><span class="muted">Gate:</span> ${esc(gateText(l.gate))}</div></div>`)));
+  v.append(h(`<div class="card"><h3>The five daily blocks</h3><div class="tbl"><table><thead><tr><th>Block</th><th>Min</th><th>What it builds</th></tr></thead><tbody>${[["Voice Lab","10","Pause instead of filler, falling tone, pace, volume on ownership lines"],["Structure Reps","12","Answer first, status updates, disagreement, exec briefings"],["Pressure Sim","12","Staying short and factual when pushed. Claude plays the other side"],["Words and Explain","10","Phrase-bank vocabulary, explaining at three altitudes"],["Benchmark and Log","10","One scored take a day that feeds your progress charts"]].map(r=>`<tr><td>${r[0]}</td><td class="mono">${r[1]}</td><td style="white-space:normal">${r[2]}</td></tr>`).join("")}</tbody></table></div></div>`));
+}
+
+/* ---------- LOG ---------- */
+function parseAnalyzer(t){const m=(re)=>{const x=t.match(re);return x?x:null;};const o={};let x;
+  if(x=m(/Pace:\s*(\d+)\s*wpm/))o.wpm=+x[1];
+  if(x=m(/Freezes[^:]*:\s*(\d+)/))o.freezes=+x[1];
+  if(x=m(/Fillers:\s*(\d+)[\s\S]*?per100:\s*([\d.]+)/))o.f100=+x[2];
+  if(x=m(/Hedges:\s*(\d+)[\s\S]*?per100:\s*([\d.]+)/))o.h100=+x[2];
+  if(x=m(/Tics:.*?(\d+)\s*\}/))o.tics=+x[1];
+  if(x=m(/Intelligibility:\s*(\d+)%/))o.intel=+x[1];
+  if(x=m(/falling tone:\s*(\d+)\s*\/\s*(\d+)/))o.falling=+x[2]?Math.round(+x[1]/+x[2]*100):null;
+  if(x=m(/Range[^:]*:\s*([\d.]+)\s*semitones/))o.range=+x[1];
+  if(x=m(/Recording peak:\s*(-?[\d.]+)/))o.peak=+x[1];
+  if(x=m(/Words:\s*(\d+)/))o.words=+x[1];
+  return o;}
+function renderLog(){
+  const v=$("#v-log");v.innerHTML="";const id=uid();
+  const paste=h(`<div class="card"><h2>Paste voice-analyzer output</h2><p class="muted" style="font-size:14px">Run <span class="mono">python3 voice-analyzer.py yourfile.m4a</span> on your benchmark recording and paste the full output. Friday at minimum.</p>
+    <div><label for="${id}-d">Session date</label><input id="${id}-d" type="date" value="${TODAY}"></div><div><label for="${id}-t">Output</label><textarea id="${id}-t" placeholder="=== SUMMARY ===&#10;Words: 98  Speaking time: 46.0s  Pace: 128 wpm ..."></textarea></div>
+    <div class="row"><button class="primary" type="button" id="${id}-p">Parse and save</button></div><div id="${id}-o" class="mono muted" style="font-size:13px"></div></div>`);
+  $("#"+id+"-p",paste).onclick=async()=>{const o=parseAnalyzer($("#"+id+"-t",paste).value);if(!Object.keys(o).length){toast("Nothing recognized. Paste the full summary.");return;}const d=$("#"+id+"-d",paste).value||TODAY;const s=sess(d);s.analyzer=o;if(!s.level)s.level=S.prog.level||1;await saveSession(d);$("#"+id+"-o",paste).textContent="Saved: "+Object.entries(o).map(([k,v])=>k+" "+v).join(" · ");toast("Analyzer data saved");};
+  v.append(paste);
+  v.append(settingsCard());
+  const rows=sortedSessions().slice().reverse();
+  v.append(h(`<div class="card"><h2>Sessions</h2><div class="tbl"><table><thead><tr><th>Date</th><th>Lvl</th><th>Blocks</th><th>Reps</th><th>Fillers/100</th><th>Hedges/100</th><th>Score</th><th>Take</th><th>Falling</th></tr></thead><tbody>${rows.map(s=>{const b=s.bench||{},a=s.analyzer||{};const f=a.f100!=null?a.f100:b.f100,hd=a.h100!=null?a.h100:b.h100;return `<tr><td class="mono">${s.date}${s.baseline?" base":""}</td><td class="mono">${s.level||"-"}</td><td class="mono">${BLOCKS.filter(x=>s.blocks&&s.blocks[x.id]).length}/5</td><td class="mono">${(s.reps||[]).length}</td><td class="mono">${f??"-"}</td><td class="mono">${hd??"-"}</td><td class="mono">${avgScore(b.scores)??"-"}</td><td class="mono">${b.sec!=null?b.sec+"s":"-"}</td><td class="mono">${a.falling!=null?a.falling+"%":"-"}</td></tr>`;}).join("")||`<tr><td colspan="9" class="muted">No sessions yet. Start with Voice Lab on Today.</td></tr>`}</tbody></table></div></div>`));
+  const recent=rows.flatMap(s=>(s.reps||[]).map(r=>({...r,date:s.date}))).filter(r=>r.fb&&r.fb.biggestFix).slice(0,5);
+  if(recent.length)v.append(h(`<div class="card"><h3>Recent biggest fixes</h3><ul class="gate">${recent.map(r=>`<li style="flex-direction:column"><span class="mono muted" style="font-size:12px">${r.date} · ${esc(r.block)}</span><span>${esc(r.fb.biggestFix)}</span></li>`).join("")}</ul></div>`));
+}
+
+
+/* ---------- sync button ---------- */
+function setSync(state,extra){const b=$("#sync");if(!b)return;b.classList.toggle("on",state==="on");b.classList.toggle("busy",state==="busy");
+  b.textContent=state==="busy"?"⟳ Syncing…":state==="on"?"✓ Synced"+(extra?" "+extra:""):"⚠ Not synced";}
+async function syncNow(){
+  if(!S.loaded){toast("Still connecting. Try again in a few seconds.");return;}
+  if(!S.db){setSync("off");toast("Sign in to sync. Log tab, Account.");return;}
+  setSync("busy");
+  try{await S.wq;
+    const [ps,qs]=await Promise.all([S.db.doc("program/state").get(),S.db.collection("sessions").get()]);
+    if(ps.exists)S.prog=JSON.parse(JSON.stringify(ps.data()));
+    const m={};qs.docs.forEach(d=>m[d.id]=JSON.parse(JSON.stringify(d.data())));const local=S.sessions[TODAY];S.sessions=m;if(local&&S.touched&&!m[TODAY])S.sessions[TODAY]=local;
+    if(local&&S.touched&&m[TODAY]){await saveSession();}
+    $("#levelchip").textContent=`Level ${L().n} · ${L().name}`;
+    if(!S.touched)renderToday();else refreshTodayStatus();if(S.view==="progress")renderProgress();if(S.view==="log")renderLog();
+    const n=Object.values(m).filter(s=>!s.baseline).length;const tm=new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit"});
+    setSync("on",tm);toast(`Synced at ${tm}. ${n} training day${n===1?"":"s"} in your log.`);
+  }catch(e){console.warn(e);setSync("off");toast("Sync failed. Check your connection and tap again.");}
+}
+document.addEventListener("click",e=>{if(e.target.closest("#sync"))syncNow();});
+/* ---------- shell ---------- */
+function show(view){S.view=view;document.querySelectorAll("nav.tabs button").forEach(b=>{const on=b.dataset.v===view;b.setAttribute("aria-selected",String(on));b.tabIndex=on?0:-1;});["today","progress","plan","log"].forEach(x=>$("#v-"+x).hidden=x!==view);
+  if(view==="progress")renderProgress();if(view==="plan")renderPlan();if(view==="log")renderLog();try{localStorage.setItem("cv-tab",view);}catch(e){}window.scrollTo(0,0);}
+document.querySelectorAll("nav.tabs button").forEach(b=>b.onclick=()=>show(b.dataset.v));
+$("nav.tabs").addEventListener("keydown",e=>{const order=["today","progress","plan","log"];let k=order.indexOf(S.view);if(e.key==="ArrowRight")k=(k+1)%4;else if(e.key==="ArrowLeft")k=(k+3)%4;else if(e.key==="Home")k=0;else if(e.key==="End")k=3;else return;e.preventDefault();show(order[k]);$("#tab-"+order[k]).focus();});
+function setHdr(){const hd=$("header.top");const sticky=getComputedStyle(hd).position==="sticky";document.documentElement.style.setProperty("--hdr",(sticky?hd.offsetHeight:0)+"px");}
+setHdr();window.addEventListener("resize",setHdr);try{new ResizeObserver(setHdr).observe($("header.top"));}catch(e){}
+function applyLevel(){const lv=L();$("#levelchip").textContent=`Level ${lv.n} · ${lv.name}`;renderToday();if(S.view!=="today")show(S.view);}
+
+renderToday();
+try{const t=localStorage.getItem("cv-tab");if(t&&t!=="today")show(t);}catch(e){}
+
+
+/* ---------- Firebase adapter (same shape the app already uses) ---------- */
+function wrapDoc(s){return {id:s.id,exists:s.exists,data:()=>s.data(),metadata:{fromCache:s.metadata&&s.metadata.fromCache,hasPendingWrites:s.metadata&&s.metadata.hasPendingWrites}};}
+function makeDB(fs,uid){
+  const root=fs.collection("users").doc(uid);
+  const ref=p=>{const parts=p.split("/");let r=root;parts.forEach((seg,i)=>{r=i%2===0?r.collection(seg):r.doc(seg);});return r;};
+  return {
+    doc:p=>{const r=ref(p);return {get:async()=>wrapDoc(await r.get()),set:d=>r.set(d),update:d=>r.update(d),delete:()=>r.delete(),onSnapshot:(n,e)=>r.onSnapshot(s=>n(wrapDoc(s)),e)};},
+    collection:p=>{const r=ref(p);const q=s=>({docs:s.docs.map(wrapDoc),size:s.size,empty:s.empty});return {get:async()=>q(await r.get()),onSnapshot:(n,e)=>r.onSnapshot(s=>n(q(s)),e)};}
+  };
+}
+
+/* ---------- Claude API (optional, key stays on this device) ---------- */
+function getKey(){try{return localStorage.getItem("cv-api-key")||"";}catch(e){return "";}}
+function getModel(){try{return localStorage.getItem("cv-model")||"";}catch(e){return "";}}
+async function pickModel(key){
+  const r=await fetch("https://api.anthropic.com/v1/models?limit=50",{headers:{"x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"}});
+  if(!r.ok)throw new Error("Key rejected ("+r.status+")");
+  const j=await r.json();const ids=(j.data||[]).map(m=>m.id);
+  return ids.find(i=>/sonnet/i.test(i))||ids[0];
+}
+function makeSample(key,model){
+  const call=async(input,opts={})=>{
+    const messages=typeof input==="string"?[{role:"user",content:input}]:input;
+    const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"content-type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model,max_tokens:1500,messages})});
+    if(r.status===429)throw {code:"rate_limited"};
+    if(!r.ok)throw {code:"upstream_error",message:await r.text()};
+    const j=await r.json();return {text:(j.content||[]).filter(c=>c.type==="text").map(c=>c.text).join("")};
+  };
+  call.json=async(input,opts)=>{const {text}=await call(input,opts);const a=text.indexOf("{"),b=text.lastIndexOf("}");if(a<0||b<a)throw {code:"invalid_json"};return JSON.parse(text.slice(a,b+1));};
+  return call;
+}
+function initSample(){const k=getKey(),m=getModel();S.sample=k&&m?makeSample(k,m):null;}
+
+/* ---------- account + settings card ---------- */
+function settingsCard(){
+  const id=uid();const u=window.fbAuth&&fbAuth.currentUser;
+  const el=h(`<div class="card"><h2>Account and settings</h2>
+    <div id="${id}-acct"></div>
+    <div><label for="${id}-k">Claude API key (turns on scoring, role-play and word checks)</label><input id="${id}-k" type="password" autocomplete="off" placeholder="sk-ant-..." value="${esc(getKey())}"></div>
+    <p class="muted" style="font-size:13px">Stored only in this browser. Add it once on each device. Model: <span class="mono">${esc(getModel()||"not set")}</span></p>
+    <div class="row"><button class="primary" type="button" id="${id}-ks">Save key</button><button type="button" id="${id}-kc">Remove key</button></div></div>`);
+  const acct=$("#"+id+"-acct",el);
+  if(u){acct.append(h(`<div class="row" style="justify-content:space-between;margin-bottom:6px"><span>Signed in as <span class="mono">${esc(u.email)}</span></span><button type="button">Sign out</button></div>`));acct.querySelector("button").onclick=()=>fbAuth.signOut();}
+  else acct.append(authForm());
+  $("#"+id+"-ks",el).onclick=async(e)=>{const k=$("#"+id+"-k",el).value.trim();if(!k){toast("Paste your key first");return;}const b=e.currentTarget;b.disabled=true;b.textContent="Checking…";
+    try{const m=await pickModel(k);localStorage.setItem("cv-api-key",k);localStorage.setItem("cv-model",m);initSample();toast("Key saved. Using "+m);renderLog();}catch(err){toast(String(err.message||err));}b.disabled=false;b.textContent="Save key";};
+  $("#"+id+"-kc",el).onclick=()=>{try{localStorage.removeItem("cv-api-key");localStorage.removeItem("cv-model");}catch(e){}initSample();toast("Key removed");renderLog();};
+  return el;
+}
+function authForm(){
+  const id=uid();const el=h(`<div style="display:flex;flex-direction:column;gap:10px">
+    <p class="muted" style="font-size:14px">Sign in with the same email on your PC and phone to sync.</p>
+    <div><label for="${id}-e">Email</label><input id="${id}-e" type="email" autocomplete="username"></div>
+    <div><label for="${id}-p">Password</label><input id="${id}-p" type="password" autocomplete="current-password"></div>
+    <div class="row"><button class="primary" type="button" id="${id}-in">Sign in</button><button type="button" id="${id}-up">Create account</button><button type="button" id="${id}-rs">Reset password</button></div>
+    <p id="${id}-err" class="muted" style="font-size:13px"></p></div>`);
+  const go=async(fn)=>{const e=$("#"+id+"-e",el).value.trim(),p=$("#"+id+"-p",el).value;const er=$("#"+id+"-err",el);er.textContent="";
+    try{await fn(e,p);}catch(x){er.textContent=(x&&x.message||String(x)).replace("Firebase: ","");}};
+  $("#"+id+"-in",el).onclick=()=>go((e,p)=>fbAuth.signInWithEmailAndPassword(e,p));
+  $("#"+id+"-up",el).onclick=()=>go((e,p)=>fbAuth.createUserWithEmailAndPassword(e,p));
+  $("#"+id+"-rs",el).onclick=()=>go(async(e)=>{await fbAuth.sendPasswordResetEmail(e);toast("Reset email sent");});
+  return el;
+}
+function showGate(){
+  let g=$("#gate");if(g)g.remove();if(window.fbAuth&&fbAuth.currentUser)return;
+  g=h(`<div id="gate" class="gatewrap"><div class="card gatecard"><div class="brand" style="justify-content:center">${document.querySelector(".brand").innerHTML}</div><h2 style="text-align:center">Sign in to sync</h2></div></div>`);
+  $(".gatecard",g).append(authForm());
+  const skip=h(`<button type="button" style="margin-top:4px">Continue without syncing</button>`);skip.onclick=()=>g.remove();$(".gatecard",g).append(skip);
+  document.body.append(g);
+}
+
+/* ---------- baseline seed (first sign-in only) ---------- */
+async function seedIfEmpty(db){
+  const st=await db.doc("program/state").get();
+  if(!st.exists)await db.doc("program/state").set({level:1,startDate:TODAY,history:[{level:1,date:TODAY}]});
+  const b=await db.doc("sessions/baseline").get();
+  if(!b.exists)await db.doc("sessions/baseline").set({date:"2026-09-18",level:0,baseline:true,blocks:{},reps:[],vocabManual:[],note:"Session 1 baseline from 4 real Teams calls, plus Session 2 Rep 2 retry audio.",bench:{f100:2.7,h100:2.7,tics:7,cf:false,scores:{clarity:3,precision:2,confidence:2,credibility:4,brevity:3,leadership:2}},analyzer:{falling:55,freezes:5,wpm:107,peak:-8.2,intel:96}});
+}
+
+/* ---------- start ---------- */
+initSample();
+let UNSUBS=[];
+(function start(){
+  const cfg=window.FIREBASE_CONFIG;
+  if(!window.firebase||!cfg||!cfg.apiKey||/PASTE/.test(cfg.apiKey)){S.loaded=true;setSync("off");renderToday();return;}
+  firebase.initializeApp(cfg);window.fbAuth=firebase.auth();const fs=firebase.firestore();
+  try{fs.enablePersistence({synchronizeTabs:true}).catch(()=>{});}catch(e){}
+  fbAuth.onAuthStateChanged(async user=>{
+    UNSUBS.forEach(u=>{try{u();}catch(e){}});UNSUBS=[];
+    if(!user){S.db=null;S.loaded=true;setSync("off");S.sessions={};S.prog={level:1};renderToday();if(S.view==="log")renderLog();showGate();return;}
+    const g=$("#gate");if(g)g.remove();
+    const db=makeDB(fs,user.uid);S.db=db;S.loaded=true;setSync("busy");
+    try{await seedIfEmpty(db);}catch(e){console.warn(e);}
+    let first=true;
+    UNSUBS.push(db.doc("program/state").onSnapshot(snap=>{const d=snap.exists?snap.data():null;const old=S.prog.level;S.prog=d?JSON.parse(JSON.stringify(d)):{level:1};
+      if(old!==S.prog.level){$("#levelchip").textContent=`Level ${L().n} · ${L().name}`;if(!S.touched)renderToday();}},e=>console.warn(e)));
+    UNSUBS.push(db.collection("sessions").onSnapshot(snap=>{const m={};snap.docs.forEach(d=>m[d.id]=JSON.parse(JSON.stringify(d.data())));
+      const local=S.sessions[TODAY];S.sessions=m;if(local&&S.touched)S.sessions[TODAY]=local;
+      setSync("on",new Date().toLocaleTimeString([],{hour:"numeric",minute:"2-digit"}));
+      if(first||!S.touched){first=false;renderToday();}else refreshTodayStatus();
+      if(S.view==="progress")renderProgress();if(S.view==="log"&&!document.activeElement.matches("textarea,input"))renderLog();},e=>{console.warn(e);setSync("off");}));
+  });
+})();
+if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));}
+
+</script>
+</body>
+</html>
