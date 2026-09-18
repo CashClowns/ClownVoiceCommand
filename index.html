@@ -343,6 +343,85 @@ button.rec.on .dot{border-radius:7px;background:#0A0A0A;box-shadow:none;width:22
   body.standalone nav.tabs{padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}
 }
 @media (max-width:380px){.brand h1 .y3d-text{display:none}}
+
+/* ===== focus layout v7 ===== */
+.guide{border-radius:10px;background:var(--sunk);padding:0 12px}
+.guide>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;color:var(--accent);font-size:14px;list-style:none}
+.guide>summary::-webkit-details-marker{display:none}
+.guide>summary::after{content:"▾";margin-left:auto;transition:transform .2s}
+.guide[open]>summary::after{transform:rotate(180deg)}
+.guide[open]{padding-bottom:12px}
+.guide .lesson{font-size:14px;margin-bottom:8px}
+.guide .pass{margin-top:8px}
+.tmrwrap{display:flex;flex-direction:column;gap:8px}
+.timer{padding:8px 10px}
+.timer .clock{font-size:22px;min-width:70px}
+.pager{display:flex;flex-direction:column;gap:10px}
+.pghead{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.pghead button{min-width:48px;min-height:44px;font-size:22px;line-height:1;padding:0}
+.pglabel{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.pgdots{display:flex;gap:6px;justify-content:center}
+.pgdots i{width:8px;height:8px;border-radius:50%;background:var(--steel)}
+.pgdots i.on{background:var(--accent);box-shadow:0 0 8px -1px var(--accent)}
+.stepcard{display:flex;flex-direction:column;gap:12px;padding:14px;border-radius:12px;background:var(--sunk);border:1px solid var(--line)}
+.stepcard h4{margin:0;font-family:var(--display);font-size:18px;font-weight:700}
+.say{font-size:19px;line-height:1.55;font-weight:500}
+.say .slash{color:var(--accent);font-weight:700;padding:0 2px}
+.saylist{margin:0;padding-left:20px;font-size:19px;line-height:1.7;font-weight:500}
+.small{font-size:13px;color:var(--muted)}
+.structline{font-family:var(--mono);font-size:12px;color:var(--accent);letter-spacing:.04em}
+.rep{border-style:solid;background:var(--sunk);gap:12px}
+.rep .prompt{font-size:17px;line-height:1.5}
+.words{border-radius:10px;border:1px solid var(--line);padding:0 12px;background:var(--surface)}
+.words>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-size:14px;color:var(--muted);list-style:none}
+.words>summary::-webkit-details-marker{display:none}
+.words[open]{padding-bottom:12px}
+.actrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.actrow .linkbtn{grid-column:1/-1}
+.linkbtn{background:none!important;box-shadow:none!important;border:none!important;color:var(--accent);min-height:40px;font-size:14px;text-decoration:underline;padding:4px}
+.blockfoot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:4px;border-top:1px solid var(--line)}
+.blockfoot .nextbtn{align-self:auto}
+@media (max-width:820px){
+  .next .goal,.next .pills{display:none}
+  .next{padding:12px 14px}
+  .next h2{font-size:22px}
+  .bbody{padding:12px;gap:12px}
+  .block>summary{padding:12px 14px}
+  .btitle small{display:none}
+}
+
+/* ===== report visuals v8 ===== */
+.rhead{display:grid;grid-template-columns:84px 1fr;gap:12px;align-items:center}
+.ring{width:84px;height:84px}
+.gauges{display:grid;grid-template-columns:1fr;gap:12px;padding:12px;border-radius:12px;background:var(--surface);border:1px solid var(--line)}
+@media (min-width:700px){.gauges{grid-template-columns:1fr 1fr;column-gap:22px}}
+.gtop{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px}
+.glab{font-size:13px;color:var(--muted)}
+.gval{font-family:var(--mono);font-size:15px;font-weight:500;white-space:nowrap}
+.gauge.good .gval{color:var(--good)} .gauge.warn .gval{color:var(--warn)} .gauge.bad .gval{color:var(--bad)}
+.gtrack{position:relative;height:10px;border-radius:5px;background:var(--sunk);overflow:visible}
+.gtrack .z{position:absolute;top:0;bottom:0;opacity:.28}
+.gtrack .z:first-child{border-radius:5px 0 0 5px}
+.gtrack .z:last-of-type{border-radius:0 5px 5px 0}
+.gtrack .z.good{background:var(--good)} .gtrack .z.warn{background:var(--warn)} .gtrack .z.bad{background:var(--bad)}
+.gtrack .tg{position:absolute;top:-3px;bottom:-3px;border:1.5px dashed color-mix(in srgb,var(--good) 80%,transparent);border-radius:4px}
+.gtrack .gmark{position:absolute;top:50%;width:18px;height:18px;margin-left:-9px;margin-top:-9px;border-radius:50%;background:var(--ink);border:3px solid var(--ground);box-shadow:0 0 0 2px currentColor,0 2px 6px rgba(0,0,0,.6)}
+.gauge.good .gmark{color:var(--good)} .gauge.warn .gmark{color:var(--warn)} .gauge.bad .gmark{color:var(--bad)}
+.contour{padding:10px}
+.contour .legend{font-size:12px;gap:12px;margin-top:4px}
+.contour .legend span::before{display:none}
+
+/* ===== compact phone header v9 ===== */
+.lvs{display:none}
+@media (max-width:560px){
+  .brand h1{font-size:20px;overflow:visible;text-overflow:clip}
+  .brand h1 .y3d-text{display:none}
+  .lvw,.lvname{display:none}
+  .lvs{display:inline}
+  .sfull{display:none}
+  .levelchip{max-width:none}
+  .sync{padding:4px 9px}
+}
 </style>
 <style>:root{padding-top:env(safe-area-inset-top,0px)} html,body{margin:0} img{max-width:100%}</style>
 </head>
@@ -613,8 +692,8 @@ const BASELINE={fillers:2.7,hedges:2.7,tics:7,cf:0.2,vocab:0,scores:{clarity:3,p
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="config.js?v=3"></script>
-<script src="analyzer.js?v=3"></script>
+<script src="config.js?v=6"></script>
+<script src="analyzer.js?v=6"></script>
 <script>
 /* ================= APP ================= */
 const $=(s,r=document)=>r.querySelector(s);
@@ -694,38 +773,62 @@ function biggestIssue(st,limit){
   if(st.hesitations>1)return `About ${st.hesitations} sustained "uh/um" sounds. Close your mouth and pause instead.`;
   return "Delivery is clean on every measure. Keep this take as your reference.";
 }
+function qpct(a,p){const s=a.slice().sort((x,y)=>x-y);return s[Math.min(s.length-1,Math.floor(s.length*p))];}
 function contourSvg(st){
-  const c=st.contour;if(!c||!c.dB.length)return "";const n=c.dB.length,W=680,H=150,pb=18;
-  const X=i=>i/(n-1)*W;const dbMin=Math.max(-90,c.thr-15),dbMax=Math.max(...c.dB);const Yd=v=>H-pb-Math.max(0,(v-dbMin)/(dbMax-dbMin))*(H-pb-8)*0.55;
-  const v=c.f0.filter(x=>x>0);if(!v.length)return "";const lo=Math.min(...v)*0.95,hi=Math.max(...v)*1.05;const Yp=f=>8+(1-Math.log(f/lo)/Math.log(hi/lo))*(H-pb-30);
-  const step=Math.max(1,Math.floor(n/340));let area=`M0 ${H-pb}`;for(let i=0;i<n;i+=step)area+=` L${X(i).toFixed(1)} ${Yd(c.dB[i]).toFixed(1)}`;area+=` L${W} ${H-pb} Z`;
-  let dots="";for(let i=0;i<n;i+=2){if(c.f0[i]>0)dots+=`<circle cx="${X(i).toFixed(1)}" cy="${Yp(c.f0[i]).toFixed(1)}" r="1.6"/>`;}
-  const fz=(st.freezeGaps||[]).map(g=>`<rect x="${X(g.at*100).toFixed(1)}" y="0" width="${(g.len*100/(n-1)*W).toFixed(1)}" height="${H-pb}" fill="var(--bad)" opacity=".14"/>`).join("");
-  const ends=st.phrases.filter(p=>p.tone!=="n/a").map(p=>{const x=X(Math.min(n-1,Math.round(p.end*100)));const col=p.tone==="falling"?"var(--good)":p.tone==="rising"?"var(--bad)":"var(--muted)";const tri=p.tone==="falling"?`${x-5},${H-pb-12} ${x+5},${H-pb-12} ${x},${H-pb-4}`:p.tone==="rising"?`${x-5},${H-pb-4} ${x+5},${H-pb-4} ${x},${H-pb-12}`:`${x-4},${H-pb-10} ${x+4},${H-pb-10} ${x+4},${H-pb-6} ${x-4},${H-pb-6}`;return `<polygon points="${tri}" fill="${col}"/>`;}).join("");
-  const secs=Math.round(n/100);let ticks="";for(let s=0;s<=secs;s+=Math.max(1,Math.round(secs/6)))ticks+=`<text x="${Math.min(W-10,X(s*100)).toFixed(1)}" y="${H-3}" font-size="10" fill="var(--muted)" font-family="IBM Plex Mono,monospace">${s}s</text>`;
-  return `<div class="contour"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Loudness and pitch over time"><path d="${area}" fill="var(--accent)" opacity=".18"/>${fz}<g fill="var(--ink)" opacity=".85">${dots}</g>${ends}${ticks}</svg>
-   <div class="legend"><span style="color:var(--accent)">loudness</span><span style="color:var(--ink)">pitch</span><span style="color:var(--good)">▼ falls</span><span style="color:var(--bad)">▲ rises</span><span style="color:var(--bad)">shaded: freeze</span></div></div>`;
+  const c=st.contour;if(!c||!c.dB.length)return "";
+  const n=c.dB.length,W=(window.innerWidth<600?380:680),H=(window.innerWidth<600?210:200),top=26,pitchH=92,loudTop=128,loudH=46,axisY=H-8;
+  const X=i=>(i/(n-1))*W;
+  const dbMin=Math.max(-90,c.thr-12),dbMax=Math.max(...c.dB);const Yd=v=>loudTop+loudH-Math.max(0,Math.min(1,(v-dbMin)/((dbMax-dbMin)||1)))*loudH;
+  const v=c.f0.filter(x=>x>0);if(!v.length)return "";
+  const lo=qpct(v,0.03)*0.94,hi=qpct(v,0.97)*1.06;const Yp=f=>top+(1-Math.log(Math.max(lo,Math.min(hi,f))/lo)/Math.log(hi/lo))*pitchH;
+  let s="";
+  // statement bands
+  st.phrases.forEach((p,i)=>{const x0=X(Math.round(p.start*100)),x1=X(Math.min(n-1,Math.round(p.end*100)));s+=`<rect x="${x0.toFixed(1)}" y="${top-4}" width="${Math.max(2,x1-x0).toFixed(1)}" height="${loudTop+loudH-top+4}" rx="4" fill="var(--ink)" opacity="${i%2?.035:.06}"/>`;});
+  // freezes
+  (st.freezeGaps||[]).forEach(g=>{const x0=X(g.at*100),w=g.len*100/(n-1)*W;s+=`<rect x="${x0.toFixed(1)}" y="${top-4}" width="${w.toFixed(1)}" height="${loudTop+loudH-top+4}" rx="4" fill="var(--bad)" opacity=".22"/><text x="${(x0+w/2).toFixed(1)}" y="${top+pitchH/2}" text-anchor="middle" font-size="11" font-weight="600" fill="var(--bad)" font-family="IBM Plex Mono,monospace">${(+g.len).toFixed(1)}s</text>`;});
+  // loudness area
+  const step=Math.max(1,Math.floor(n/360));let area=`M0 ${loudTop+loudH}`;for(let i=0;i<n;i+=step)area+=` L${X(i).toFixed(1)} ${Yd(c.dB[i]).toFixed(1)}`;area+=` L${W} ${loudTop+loudH} Z`;
+  s+=`<defs><linearGradient id="lg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#FFC61A" stop-opacity=".75"/><stop offset="1" stop-color="#FFC61A" stop-opacity=".08"/></linearGradient></defs><path d="${area}" fill="url(#lg)"/>`;
+  // pitch as connected runs
+  let run=[];const flush=()=>{if(run.length>=3){s+=`<polyline points="${run.map(([x,y])=>x.toFixed(1)+","+y.toFixed(1)).join(" ")}" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" opacity=".9"/>`;}run=[];};
+  for(let i=0;i<n;i+=2){const f=c.f0[i];if(f>0){const y=Yp(f);if(run.length&&Math.abs(y-run[run.length-1][1])>22)flush();run.push([X(i),y]);}else if(run.length&&(i+2>=n||!(c.f0[i+2]>0)))flush();}flush();
+  // tone markers above each statement end
+  st.phrases.forEach(p=>{if(p.tone==="n/a")return;const x=X(Math.min(n-1,Math.round(p.end*100)));const col=p.tone==="falling"?"var(--good)":p.tone==="rising"?"var(--bad)":"var(--muted)";
+    const shape=p.tone==="falling"?`M${x-6} ${top-18} L${x+6} ${top-18} L${x} ${top-8} Z`:p.tone==="rising"?`M${x-6} ${top-8} L${x+6} ${top-8} L${x} ${top-18} Z`:`M${x-6} ${top-15} L${x+6} ${top-15} L${x+6} ${top-11} L${x-6} ${top-11} Z`;s+=`<path d="${shape}" fill="${col}"/>`;});
+  // axis
+  const secs=n/100,every=(W<500?(secs>40?20:secs>20?10:secs>8?4:2):(secs>40?10:secs>20?5:secs>8?2:1));for(let t=0;t<=secs;t+=every){const x=X(t*100);s+=`<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${loudTop+loudH}" y2="${loudTop+loudH+4}" stroke="var(--muted)"/><text x="${Math.min(W-12,Math.max(0,x-4)).toFixed(1)}" y="${axisY}" font-size="10" fill="var(--muted)" font-family="IBM Plex Mono,monospace">${t}s</text>`;}
+  s+=`<text x="0" y="${top+10}" font-size="9" fill="var(--muted)" font-family="IBM Plex Mono,monospace">PITCH</text><text x="0" y="${loudTop+9}" font-size="9" fill="var(--muted)" font-family="IBM Plex Mono,monospace">VOLUME</text>`;
+  return `<div class="contour"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Pitch and volume over time, with statement endings and freezes">${s}</svg>
+   <div class="legend"><span style="color:var(--good)">▼ ends falling</span><span style="color:var(--bad)">▲ ends rising</span><span style="color:var(--muted)">▬ flat</span><span style="color:var(--bad)">■ freeze</span></div></div>`;
+}
+/* horizontal gauge with colored zones and a marker */
+function gauge(label,valText,val,min,max,zones,target){
+  const p=v=>Math.max(0,Math.min(100,(v-min)/(max-min)*100));
+  const zone=zones.find(z=>val>=z[0]&&val<z[1])||zones[zones.length-1];const cls=zone[2];
+  const segs=zones.map(z=>`<i class="z ${z[2]}" style="left:${p(z[0])}%;width:${p(Math.min(z[1],max))-p(z[0])}%"></i>`).join("");
+  const tg=target?`<i class="tg" style="left:${p(target[0])}%;width:${p(target[1])-p(target[0])}%"></i>`:"";
+  return {cls,html:`<div class="gauge ${cls}"><div class="gtop"><span class="glab">${esc(label)}</span><b class="gval">${esc(valText)}</b></div><div class="gtrack">${segs}${tg}<i class="gmark" style="left:${p(val)}%"></i></div></div>`};
 }
 function reportView(st,limit,opts={}){
-  const cls=(ok,warn)=>ok?"good":(warn?"warn":"bad");const tr=st.trailAvg;
-  const tiles=[
-    [limit?cls(st.sec<=limit,st.sec<=limit*1.2):"",st.sec+"s","spoken length"+(limit?` (limit ${limit}s)`:"")],
-    [st.estWpm?cls(st.estWpm>=120&&st.estWpm<=160,st.estWpm>=105&&st.estWpm<=175):"",st.estWpm?"~"+st.estWpm:"n/a","wpm pace, target 130 to 150"],
-    [cls(st.freezes===0,st.freezes===1),st.freezes,"freezes of 1.5s+"],
-    [cls(st.longest<1.2,st.longest<1.5),st.longest+"s","longest pause"],
-    [st.toneN?cls(st.falling>=70,st.falling>=50):"",st.toneN?st.fall+"/"+st.toneN:"n/a","statements falling"+(st.rise?`, ${st.rise} rising`:"")],
-    [st.rangeSt==null?"":cls(st.rangeSt>=6,st.rangeSt>=4),st.rangeSt==null?"n/a":st.rangeSt+" st","pitch range, 6 to 10 engaged"],
-    [tr==null?"":cls(tr>-3,tr>-4),tr==null?"n/a":(tr>0?"+":"")+tr+" dB","volume at statement ends"],
-    [cls(st.hesitations===0,st.hesitations<=1),st.hesitations,"um/uh sounds (estimate)"],
-    [cls(st.peak>=-18&&st.peak<-0.5,st.peak>=-30),st.peak+" dB",st.peak>=-0.5?"mic peak, clipping":"mic peak"]
-  ];
+  const G=[];
+  if(limit)G.push(gauge("Length",st.sec+"s of "+limit+"s",st.sec,0,limit*1.4,[[0,limit,"good"],[limit,limit*1.2,"warn"],[limit*1.2,1e9,"bad"]]));
+  if(st.estWpm)G.push(gauge("Pace","~"+st.estWpm+" wpm",st.estWpm,70,200,[[0,105,"bad"],[105,120,"warn"],[120,160,"good"],[160,175,"warn"],[175,1e9,"bad"]],[130,150]));
+  G.push(gauge("Longest pause",st.longest+"s"+(st.freezes?` · ${st.freezes} freeze${st.freezes>1?"s":""}`:""),st.longest,0,3,[[0,1.2,"good"],[1.2,1.5,"warn"],[1.5,1e9,"bad"]]));
+  if(st.toneN)G.push(gauge("Statements ending down",`${st.fall} of ${st.toneN}`+(st.rise?` · ${st.rise} up`:""),st.falling,0,100,[[0,50,"bad"],[50,70,"warn"],[70,101,"good"]]));
+  if(st.rangeSt!=null)G.push(gauge("Pitch range",st.rangeSt+" semitones",st.rangeSt,0,14,[[0,4,"bad"],[4,6,"warn"],[6,10,"good"],[10,1e9,"warn"]],[6,10]));
+  if(st.trailAvg!=null)G.push(gauge("Volume at statement ends",(st.trailAvg>0?"+":"")+st.trailAvg+" dB",st.trailAvg,-10,4,[[-1e9,-4,"bad"],[-4,-3,"warn"],[-3,1e9,"good"]]));
+  G.push(gauge("Um / uh sounds",st.hesitations+" (estimate)",st.hesitations,0,5,[[0,1,"good"],[1,2,"warn"],[2,1e9,"bad"]]));
+  G.push(gauge("Mic level",st.peak+" dB peak",st.peak,-42,0,[[-1e9,-30,"bad"],[-30,-18,"warn"],[-18,-0.8,"good"],[-0.8,1e9,"bad"]],[-12,-3]));
+  const on=G.filter(g=>g.cls==="good").length,tot=G.length,pctOn=on/tot;
+  const R=30,C=2*Math.PI*R;
+  const ring=`<svg viewBox="0 0 80 80" class="ring" aria-hidden="true"><circle cx="40" cy="40" r="${R}" fill="none" stroke="var(--steel)" stroke-width="9"/><circle cx="40" cy="40" r="${R}" fill="none" stroke="${pctOn>=0.75?"var(--good)":pctOn>=0.5?"var(--accent)":"var(--bad)"}" stroke-width="9" stroke-linecap="round" stroke-dasharray="${(C*pctOn).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 40 40)"/><text x="40" y="46" text-anchor="middle" font-size="20" font-weight="700" fill="var(--ink)" font-family="IBM Plex Mono,monospace">${on}/${tot}</text></svg>`;
   const el=h(`<div class="report">
-    <div class="verdict"><div class="eyebrow">Biggest fix</div><p>${esc(biggestIssue(st,limit))}</p></div>
-    <div class="stats">${tiles.map(x=>`<div class="stat ${x[0]}"><b>${esc(String(x[1]))}</b><span>${esc(x[2])}</span></div>`).join("")}</div>
+    <div class="rhead">${ring}<div class="verdict"><div class="eyebrow">Biggest fix</div><p>${esc(biggestIssue(st,limit))}</p></div></div>
+    <div class="gauges">${G.map(g=>g.html).join("")}</div>
     ${contourSvg(st)}
     ${st.url?`<audio controls src="${st.url}" style="width:100%"></audio>`:""}
-    <details class="phr"><summary>Statement by statement (${st.phrases.length})</summary><ol>${st.phrases.map(p=>`<li><span class="mono">${p.start}s</span> ${p.len}s · ends <b class="${p.tone==="falling"?"g":p.tone==="rising"?"r":""}">${toneWord(p)}</b>${p.change!=null?` (${p.change>0?"+":""}${p.change} st)`:""}${p.trail!=null?` · end volume ${p.trail>0?"+":""}${p.trail} dB`:""}</li>`).join("")}</ol></details>
-    <p class="muted" style="font-size:12px">Measured on this device: voice activity, YIN pitch tracking, syllable-based pace. Pace and um/uh counts are estimates. Use the numbers to track trends week to week.</p></div>`);
+    <details class="phr"><summary>Statement by statement (${st.phrases.length})</summary><ol>${st.phrases.map(p=>`<li><span class="mono">${p.start}s</span> ${p.len}s · ends <b class="${p.tone==="falling"?"g":p.tone==="rising"?"r":""}">${toneWord(p)}</b>${p.change!=null?` (${p.change>0?"+":""}${p.change} st)`:""}${p.trail!=null?` · end volume ${p.trail>0?"+":""}${p.trail} dB`:""}</li>`).join("")}</ol>
+    <p class="muted" style="font-size:12px;margin-top:8px">Measured on this device: voice activity, YIN pitch tracking, syllable-based pace. Pace and um/uh are estimates. Track the trend week to week.</p></details></div>`);
   return el;
 }
 /* ---------- live transcript (Web Speech API, where the browser has it) ---------- */
@@ -733,7 +836,7 @@ function startSR(el,opts){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR||!opts.hasText||S.noLiveText)return;
   const ta=el.closest(".rep")&&el.closest(".rep").querySelector("textarea");if(!ta)return;
   try{const r=new SR();r.lang="en-US";r.continuous=true;r.interimResults=true;const base=ta.value?ta.value.trim()+" ":"";let fin="";
-    r.onresult=e=>{let interim="";for(let i=e.resultIndex;i<e.results.length;i++){const x=e.results[i];if(x.isFinal)fin+=x[0].transcript.trim()+" ";else interim+=x[0].transcript;}ta.value=(base+fin+interim).trim();ta.dispatchEvent(new Event("input"));};
+    r.onresult=e=>{let interim="";for(let i=e.resultIndex;i<e.results.length;i++){const x=e.results[i];if(x.isFinal)fin+=x[0].transcript.trim()+" ";else interim+=x[0].transcript;}ta.value=(base+fin+interim).trim();ta.dispatchEvent(new Event("input"));const wd=ta.closest("details");if(wd)wd.open=true;};
     r.onerror=ev=>{if(ev.error==="not-allowed"||ev.error==="service-not-allowed"){toast("Live transcript is off in this browser. Dictate after recording.");}};
     r.onend=()=>{if(el._sr===r&&el._srOn){try{r.start();}catch(x){}}};
     el._sr=r;el._srOn=true;r.start();}catch(e){}
@@ -765,17 +868,16 @@ function selfScoreForm(){const id=uid();const keys=[["clarity","Clarity"],["prec
 /* ---------- rep component ---------- */
 function repPanel(ctx){
   const id=uid();let audio=null,fb=null,self=null,saved=false;
-  const el=h(`<div class="rep"><div class="eyebrow">${esc(ctx.label||"Rep")}</div>${ctx.prompt?`<p class="prompt">${esc(ctx.prompt)}</p>`:""}<div id="${id}-rec"></div>
-   <div><label for="${id}-txt">What you said</label><textarea id="${id}-txt" placeholder="Your words fill in here while you record, where the browser supports live transcript. Otherwise dictate (mic key on the keyboard) or type it, fillers included."></textarea></div>
-   <div id="${id}-loc" class="muted mono" style="font-size:13px"></div>
-   <div class="row"><button class="primary" id="${id}-score" type="button">Score with Claude</button><button id="${id}-self" type="button">Score myself</button><button id="${id}-save" type="button">Save rep</button></div>
+  const el=h(`<div class="rep">${ctx.label?`<div class="eyebrow">${esc(ctx.label)}</div>`:""}${ctx.prompt?`<p class="prompt">${esc(ctx.prompt)}</p>`:""}<div id="${id}-rec"></div>
+   <details class="words" id="${id}-wd"><summary id="${id}-sum">Your words · tap to add</summary><textarea id="${id}-txt" aria-label="What you said" placeholder="Fills in while you record where supported. Otherwise tap the keyboard mic and speak, or type it. Keep the fillers."></textarea><div id="${id}-loc" class="muted mono" style="font-size:13px;margin-top:6px"></div></details>
+   <div class="actrow"><button class="primary" id="${id}-score" type="button">Score</button><button id="${id}-save" type="button">Save</button><button id="${id}-self" type="button" class="linkbtn">Score myself</button></div>
    <div id="${id}-fb"></div></div>`);
-  $("#"+id+"-rec",el).append(recorderPanel(st=>{audio=st;ctx.onAudio&&ctx.onAudio(st);},{limit:ctx.limitSec,hasText:true,big:ctx.big}));
-  const txt=$("#"+id+"-txt",el),loc=$("#"+id+"-loc",el),fbBox=$("#"+id+"-fb",el);
-  const upd=()=>{const a=analyzeText(txt.value);if(!a.words){loc.textContent="";return a;}const wpm=audio&&audio.speechSec?Math.round(a.words/audio.sec*60):null;
+  $("#"+id+"-rec",el).append(recorderPanel(st=>{audio=st;ctx.onAudio&&ctx.onAudio(st);if(!txt.value.trim())$("#"+id+"-wd",el).open=true;},{limit:ctx.limitSec,hasText:true,big:ctx.big}));
+  const txt=$("#"+id+"-txt",el),loc=$("#"+id+"-loc",el),fbBox=$("#"+id+"-fb",el),sum=$("#"+id+"-sum",el);
+  const upd=()=>{const a=analyzeText(txt.value);sum.textContent=a.words?`Your words · ${a.words} words · ${a.fillers} fillers · ${a.hedges} hedges${a.tics?` · ${a.tics} "go ahead and"`:""}`:"Your words · tap to add";if(!a.words){loc.textContent="";return a;}const wpm=audio&&audio.speechSec?Math.round(a.words/audio.sec*60):null;
     loc.textContent=`${a.words} words · fillers ${a.fillers} (${a.f100}/100) · hedges ${a.hedges} (${a.h100}/100) · "go ahead and" ${a.tics}${wpm?` · ${wpm} wpm`:""}`;return a;};
   txt.addEventListener("input",()=>{S.touched=true;upd();});
-  $("#"+id+"-score",el).onclick=async(e)=>{if(ctx.getPrompt)ctx.prompt=ctx.getPrompt();const a=upd();if(!a.words){toast("Add what you said first");return;}const b=e.currentTarget;b.disabled=true;b.textContent="Scoring…";
+  $("#"+id+"-score",el).onclick=async(e)=>{if(ctx.getPrompt)ctx.prompt=ctx.getPrompt();const a=upd();if(!a.words){toast("Add your words first");$("#"+id+"-wd",el).open=true;txt.focus();return;}const b=e.currentTarget;b.disabled=true;b.textContent="Scoring…";
     try{fb=await askJSON(scorePrompt(ctx,txt.value,a,audio));fbBox.innerHTML="";fbBox.append(fbView(fb));self=null;}
     catch(err){if(err&&(err.code==="not_granted"||err.code==="sampling_disabled"||err.code==="not_declared")){toast("Add your Claude API key in Log, Settings to turn on scoring. Score yourself for now.");$("#"+id+"-self",el).click();}else toast(err&&err.code==="rate_limited"?"Too many requests. Wait a minute.":"Scoring failed. Try again.");}
     b.disabled=false;b.textContent="Score again";};
@@ -821,10 +923,10 @@ You already opened with: "${sc.opener}"`;
 
 /* ---------- timer ---------- */
 const TIMERS=[];
-function timerPanel(min,steps){
+function timerPanel(min,steps,guide){
   const id=uid();const total=min*60;let el0=0,start=null,iv=null;
-  const el=h(`<div><div class="timer"><span class="clock" id="${id}-c">${min}:00</span><button type="button" id="${id}-g">Start</button><button type="button" id="${id}-r">Reset</button><div class="tbar"><b id="${id}-p"></b></div></div>
-   <ol class="steps" style="margin-top:10px">${steps.map(s=>`<li data-at="${s[0]}"><span class="at">${s[0]}</span><span>${esc(s[1])}</span></li>`).join("")}</ol></div>`);
+  const el=h(`<div class="tmrwrap"><div class="timer"><span class="clock" id="${id}-c">${min}:00</span><button type="button" id="${id}-g">Start</button><button type="button" id="${id}-r">Reset</button><div class="tbar"><b id="${id}-p"></b></div></div>
+   <details class="guide"><summary>How to do this block</summary>${guide&&guide.lesson?`<p class="lesson">${esc(guide.lesson)}</p>`:""}<ol class="steps">${steps.map(s=>`<li data-at="${s[0]}"><span class="at">${s[0]}</span><span>${esc(s[1])}</span></li>`).join("")}</ol>${guide&&guide.pass?`<div class="pass"><strong style="font-weight:600">Pass:</strong> ${esc(guide.pass)}</div>`:""}</details></div>`);
   const clock=$("#"+id+"-c",el),go=$("#"+id+"-g",el),lis=[...el.querySelectorAll("li")];
   const secs=lis.map(li=>{const [m,s]=li.dataset.at.split(":").map(Number);return m*60+s;});
   const elapsed=()=>el0+(start?(Date.now()-start)/1000:0);
@@ -833,6 +935,15 @@ function timerPanel(min,steps){
   const run=()=>{TIMERS.forEach(t=>t!==api&&t.pause());start=Date.now();iv=setInterval(draw,250);go.textContent="Pause";S.touched=true;};
   go.onclick=()=>start?pause():run();$("#"+id+"-r",el).onclick=()=>{pause();el0=0;go.textContent="Start";draw();};
   const api={pause};TIMERS.push(api);return el;
+}
+/* one card at a time: [{label, el}] */
+function pager(items){
+  let k=0;const el=h(`<div class="pager"><div class="pghead"><button type="button" class="pgprev" aria-label="Previous">‹</button><span class="pglabel"></span><button type="button" class="pgnext" aria-label="Next">›</button></div><div class="pgdots">${items.map(()=>"<i></i>").join("")}</div><div class="pgbody"></div></div>`);
+  const body=$(".pgbody",el),lab=$(".pglabel",el),prev=$(".pgprev",el),next=$(".pgnext",el),dots=[...el.querySelectorAll(".pgdots i")];
+  items.forEach(it=>{it.el.hidden=true;body.append(it.el);});
+  const go=i=>{k=Math.max(0,Math.min(items.length-1,i));items.forEach((it,j)=>it.el.hidden=j!==k);lab.textContent=`${items[k].label} · ${k+1} of ${items.length}`;prev.disabled=k===0;next.disabled=k===items.length-1;dots.forEach((d,j)=>d.classList.toggle("on",j===k));};
+  prev.onclick=()=>go(k-1);next.onclick=()=>{go(k+1);el.scrollIntoView({block:"start",behavior:"smooth"});};
+  el.go=go;go(0);return el;
 }
 function beep(){try{const c=new (window.AudioContext||window.webkitAudioContext)();const o=c.createOscillator(),g=c.createGain();o.frequency.value=660;g.gain.value=.08;o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+.35);setTimeout(()=>c.close(),600);}catch(e){}}
 
@@ -862,40 +973,42 @@ function goBlock(id){const d=document.querySelector(`details.block[data-b="${id}
 function blockCard(b,i,lv,di,s,open){
   const cfg=lv[b.id];const done=!!(s&&s.blocks&&s.blocks[b.id]);const id=uid();
   const el=h(`<details class="block ${done?"done":""}" data-b="${b.id}" ${open?"open":""}><summary><span class="bnum">${done?"✓":i+1}</span><span class="btitle"><h3>${esc(b.name)}</h3><small>${esc(b.sub)}</small></span><span class="bmin">${cfg.min} min</span></summary><div class="bbody"></div></details>`);
-  const body=$(".bbody",el);body.append(h(`<p class="lesson">${esc(cfg.lesson)}</p>`));
+  const body=$(".bbody",el);
   const steps=cfg.steps||({pressure:[["0:00","Read the situation. Plan your first line in 30 seconds."],["1:00","Run the sim. Say each answer out loud, then send the gist. One question at a time."],["9:00","End and score. Read the biggest fix."],["11:00","Redo your weakest answer out loud once, using the rewrite."]],
     vocab:[["0:00","Words. For each word read the example, then say your own MSP sentence out loud twice. Type one and check it."],["4:00","Explain. "+cfg.explain+" Record the shortest version."],["9:00","Tick the words you used today without prompting."]],
-    bench:[["0:00","Read the prompt. 20 seconds to prepare."],["0:30","Record one take. No restarts."],["2:00","Dictate or type what you said. Score it."],["6:00","Save the benchmark. On Fridays also run voice-analyzer.py on the file and paste the output in Log."]]})[b.id];
-  const tmr=timerPanel(cfg.min,steps);
-  if(b.id==="voice"){const cy=di;body.append(h(`<div class="material"><div class="eyebrow">Pause drill passage</div>${esc(pick(PASSAGES,cy))}</div>`));
-    body.append(h(`<div class="material"><div class="eyebrow">Falling-tone lines</div><ul>${[0,1,2,3,4].map(k=>`<li>${esc(pick(FALL_LINES,cy*5+k))}</li>`).join("")}</ul></div>`));
-    body.append(h(`<div class="material"><div class="eyebrow">60-second topic</div>${esc(pick(BUZZ,cy))}</div>`));
-    const chk=h(`<div class="rep"><div class="eyebrow">Check a take</div></div>`);chk.append(recorderPanel(null,{limit:60}));body.append(chk);}
-  if(b.id==="reps"){body.append(h(`<div class="material"><div class="eyebrow">Structure</div>${lv.structure.map(esc).join(" → ")}${lv.n>=2?`<br><span class="muted" style="font-size:14px">Not knowing: "I don't have that confirmed yet. I'll have it by [time]."</span>`:""}</div>`));
-    [0,1,2].forEach(k=>body.append(repPanel({block:"reps",label:"Prompt "+(k+1),prompt:pick(cfg.prompts,di*3+k),type:"Structure rep",structure:lv.structure,limitSec:lv.n===2?45:lv.n===4?90:60})));}
+    bench:[["0:00","Read the prompt. 20 seconds to prepare."],["0:30","Record one take. No restarts."],["2:00","Check your words. Score it."],["6:00","Save the benchmark."]]})[b.id];
+  body.append(timerPanel(cfg.min,steps,{lesson:cfg.lesson,pass:cfg.pass}));
+  const card=(title,html,rec)=>{const c=h(`<div class="stepcard"><h4>${esc(title)}</h4>${html||""}</div>`);if(rec)c.append(recorderPanel(null,{limit:rec}));return c;};
+  if(b.id==="voice"){const cy=di;
+    body.append(pager([
+      {label:"Breathe",el:card("Breath reset",`<p class="say">In for 4. Hold 4. Out for 6.</p><p class="muted">Four rounds. Shoulders down.</p>`)},
+      {label:"Pause drill",el:card("Read it. Each slash is a full stop.",`<p class="say">${esc(pick(PASSAGES,cy)).replace(/ \/ /g,' <span class="slash">/</span> ')}</p>`,60)},
+      {label:"Falling tone",el:card("Drop your pitch on the last word.",`<ul class="saylist">${[0,1,2,3,4].map(k=>`<li>${esc(pick(FALL_LINES,cy*5+k))}</li>`).join("")}</ul>`,30)},
+      {label:"60-second talk",el:card("Talk 60 seconds. Filler? Pause and restart the sentence.",`<p class="say">${esc(pick(BUZZ,cy))}</p>`,60)}
+    ]));}
+  if(b.id==="reps"){body.append(h(`<p class="structline">${lv.structure.map(esc).join(" → ")}</p>`));
+    body.append(pager([0,1,2].map(k=>({label:"Prompt",el:repPanel({block:"reps",label:"",prompt:pick(cfg.prompts,di*3+k),type:"Structure rep",structure:lv.structure,limitSec:lv.n===2?45:lv.n===4?90:60})}))));}
   if(b.id==="pressure"){let k=di;const holder=h(`<div></div>`);const draw=()=>{const sc=pick(cfg.scenarios,k);holder.innerHTML="";holder.append(simPanel(sc,cfg.difficulty));};draw();
-    const sw=h(`<button type="button">Different scenario</button>`);sw.onclick=()=>{k++;draw();};body.append(holder);body.append(h(`<div class="row"></div>`));body.lastChild.append(sw);}
+    const sw=h(`<button type="button" class="linkbtn">Different scenario</button>`);sw.onclick=()=>{k++;draw();};body.append(holder);body.append(sw);}
   if(b.id==="vocab"){const words=[0,1,2].map(k=>pick(WORDS,di*3+k));
-    words.forEach(w=>{const wid=uid();const c=h(`<div class="rep"><div class="eyebrow">Word</div><h3>${esc(w[0])}</h3><p class="muted">${esc(w[1])}</p><label for="${wid}">Your sentence</label><input id="${wid}" type="text" placeholder="Use it in a sentence from your own calls"><div class="row"><button type="button">Check with Claude</button></div><div class="wfb"></div></div>`);
+    const items=words.map(w=>{const wid=uid();const c=h(`<div class="stepcard"><h4>${esc(w[0])}</h4><p class="muted">${esc(w[1])}</p><p class="small">Say your own sentence out loud twice, then type it.</p><input id="${wid}" type="text" placeholder="Your sentence"><div class="row"><button type="button">Check with Claude</button></div><div class="wfb"></div></div>`);
       c.querySelector("button").onclick=async(e)=>{const val=$("#"+wid,c).value.trim();if(!val){toast("Write your sentence first");return;}const bt=e.currentTarget;bt.disabled=true;bt.textContent="Checking…";
         try{const r=await askJSON(`Word drill for an MSP engineer. Term: ${w[0]}. Model usage: ${w[1]}. His sentence: "${val}". Is the term used correctly and naturally for a client or bridge call? Return JSON only: {"ok":true,"note":"one plain sentence, no praise","better":"a sharper version of his sentence"}. No em dashes, no semicolons.`);
           $(".wfb",c).innerHTML="";$(".wfb",c).append(h(`<div class="fb"><span class="pill ${r.ok?"good":"bad"}">${r.ok?"Correct use":"Misused"}</span><p>${esc(r.note)}</p><p class="rewrite">${esc(r.better)}</p></div>`));}
         catch(err){toast("Add your Claude API key in Log, Settings to check words.");}
-        bt.disabled=false;bt.textContent="Check again";};body.append(c);});
-    const topic=pick(TOPICS,di);body.append(h(`<div class="material"><div class="eyebrow">Explain today</div><strong style="font-weight:600">${esc(topic)}</strong><br>${esc(cfg.explain)}</div>`));
-    const rp=h(`<div class="rep"><div class="eyebrow">Record the explanation</div></div>`);rp.append(recorderPanel(null,{limit:60}));body.append(rp);
+        bt.disabled=false;bt.textContent="Check again";};return {label:"Word",el:c};});
+    const topic=pick(TOPICS,di);items.push({label:"Explain",el:card(topic,`<p class="muted">${esc(cfg.explain)}</p>`,60)});
+    body.append(pager(items));
     const cur=new Set((S.sessions[TODAY]&&S.sessions[TODAY].vocabManual)||[]);
-    const used=h(`<div class="rep"><div class="eyebrow">Words you used today without prompting</div><div class="row">${WORDS.map(w=>`<label class="check" style="min-height:36px;font-size:14px;margin-right:6px"><input type="checkbox" value="${esc(w[0])}" ${cur.has(w[0])?"checked":""}>${esc(w[0])}</label>`).join("")}</div></div>`);
+    const used=h(`<details class="guide"><summary>Words you used today without prompting</summary><div class="row">${WORDS.map(w=>`<label class="check" style="min-height:36px;font-size:14px;margin-right:6px"><input type="checkbox" value="${esc(w[0])}" ${cur.has(w[0])?"checked":""}>${esc(w[0])}</label>`).join("")}</div></details>`);
     used.addEventListener("change",()=>{const s=sess();s.vocabManual=[...used.querySelectorAll("input:checked")].map(i=>i.value);saveSession();});body.append(used);}
-  if(b.id==="bench"){body.append(h(`<div class="material"><div class="eyebrow">Benchmark · ${esc(cfg.type)}</div>Structure: ${lv.structure.map(esc).join(" → ")}</div>`));
-    body.append(repPanel({block:"bench",bench:true,label:"Today's benchmark",prompt:pick(cfg.prompts,di),type:cfg.type,structure:lv.structure,limitSec:cfg.limitSec}));}
-  body.querySelector(".lesson").after(tmr);
-  body.append(h(`<div class="pass"><strong style="font-weight:600">Pass:</strong> ${esc(cfg.pass||"Complete the block on the timer.")}</div>`));
+  if(b.id==="bench"){body.append(h(`<p class="structline">${esc(cfg.type)} · ${lv.structure.map(esc).join(" → ")}</p>`));
+    body.append(repPanel({block:"bench",bench:true,label:"",prompt:pick(cfg.prompts,di),type:cfg.type,structure:lv.structure,limitSec:cfg.limitSec}));}
   const dn=h(`<label class="check"><input type="checkbox" ${done?"checked":""}> Block done</label>`);
   dn.querySelector("input").onchange=async(e)=>{const s2=sess();s2.level=S.prog.level||1;s2.blocks=s2.blocks||{};s2.blocks[b.id]=e.target.checked;el.classList.toggle("done",e.target.checked);$(".bnum",el).textContent=e.target.checked?"✓":i+1;
     await saveSession();refreshTodayStatus();if(e.target.checked){try{navigator.vibrate&&navigator.vibrate(30);}catch(x){}const nx=BLOCKS.slice(i+1).find(x=>!(sess().blocks||{})[x.id]);if(nx)goBlock(nx.id);else{el.open=false;window.scrollTo({top:0,behavior:"smooth"});toast("Session complete. Saved.");}}};
-  body.append(dn);
-  const nb=BLOCKS[i+1];const nbtn=h(`<button type="button" class="nextbtn">${nb?"Next: "+esc(nb.name)+" →":"↑ Back to top"}</button>`);nbtn.onclick=()=>nb?goBlock(nb.id):window.scrollTo({top:0,behavior:"smooth"});body.append(nbtn);return el;
+  const nb=BLOCKS[i+1];const nbtn=h(`<button type="button" class="nextbtn">${nb?"Next →":"↑ Top"}</button>`);nbtn.onclick=()=>nb?goBlock(nb.id):window.scrollTo({top:0,behavior:"smooth"});
+  const foot=h(`<div class="blockfoot"></div>`);foot.append(dn,nbtn);body.append(foot);return el;
 }
 function refreshTodayStatus(){const s=S.sessions[TODAY],st=dayStatus(s);const p=$("#daypill");if(p){p.className="pill "+(st==="full"?"good":st==="min"?"warn":"");p.textContent=dayPillText(st);}
   const sp=$("#stepper");if(sp)sp.querySelectorAll("button").forEach((x,i)=>{const d=!!(s&&s.blocks&&s.blocks[x.dataset.go]);x.classList.toggle("done",d);x.querySelector(".sn").textContent=d?"✓":i+1;});
@@ -1025,7 +1138,8 @@ function renderLog(){
 
 /* ---------- sync button ---------- */
 function setSync(state,extra){const b=$("#sync");if(!b)return;b.classList.toggle("on",state==="on");b.classList.toggle("busy",state==="busy");
-  b.textContent=state==="busy"?"⟳ Syncing…":state==="on"?"✓ Synced"+(extra?" "+extra:""):"⚠ Not synced";}
+  b.innerHTML=state==="busy"?'⟳<span class="sfull"> Syncing…</span>':state==="on"?'✓<span class="sfull"> Synced</span>'+(extra?" "+esc(extra):""):'⚠<span class="sfull"> Not</span> synced';}
+function setLevelChip(){const lv=L();const c=$("#levelchip");if(c)c.innerHTML=`<span class="lvw">Level </span><span class="lvs">Lv </span>${lv.n}<span class="lvname"> · ${esc(lv.name)}</span>`;}
 async function syncNow(){
   if(!S.loaded){toast("Still connecting. Try again in a few seconds.");return;}
   if(!S.db){setSync("off");toast("Sign in to sync. Log tab, Account.");return;}
@@ -1035,7 +1149,7 @@ async function syncNow(){
     if(ps.exists)S.prog=JSON.parse(JSON.stringify(ps.data()));
     const m={};qs.docs.forEach(d=>m[d.id]=JSON.parse(JSON.stringify(d.data())));const local=S.sessions[TODAY];S.sessions=m;if(local&&S.touched&&!m[TODAY])S.sessions[TODAY]=local;
     if(local&&S.touched&&m[TODAY]){await saveSession();}
-    $("#levelchip").textContent=`Level ${L().n} · ${L().name}`;
+    setLevelChip();
     if(!S.touched)renderToday();else refreshTodayStatus();if(S.view==="progress")renderProgress();if(S.view==="log")renderLog();
     const n=Object.values(m).filter(s=>!s.baseline).length;const tm=new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit"});
     setSync("on",tm);toast(`Synced at ${tm}. ${n} training day${n===1?"":"s"} in your log.`);
@@ -1060,9 +1174,9 @@ document.querySelectorAll("nav.tabs button").forEach(b=>b.onclick=()=>show(b.dat
 $("nav.tabs").addEventListener("keydown",e=>{const order=["today","analyze","progress","plan","log"];let k=order.indexOf(S.view);if(e.key==="ArrowRight")k=(k+1)%5;else if(e.key==="ArrowLeft")k=(k+4)%5;else if(e.key==="Home")k=0;else if(e.key==="End")k=4;else return;e.preventDefault();show(order[k]);$("#tab-"+order[k]).focus();});
 function setHdr(){const hd=$("header.top");const sticky=getComputedStyle(hd).position==="sticky";document.documentElement.style.setProperty("--hdr",(sticky?hd.offsetHeight:0)+"px");}
 setHdr();window.addEventListener("resize",setHdr);try{new ResizeObserver(setHdr).observe($("header.top"));}catch(e){}
-function applyLevel(){const lv=L();$("#levelchip").textContent=`Level ${lv.n} · ${lv.name}`;renderToday();if(S.view!=="today")show(S.view);}
+function applyLevel(){const lv=L();setLevelChip();renderToday();if(S.view!=="today")show(S.view);}
 
-renderToday();
+setLevelChip();renderToday();
 try{const t=localStorage.getItem("cv-tab");if(t&&t!=="today")show(t);}catch(e){}
 
 
@@ -1161,7 +1275,7 @@ let UNSUBS=[];
     try{await seedIfEmpty(db);}catch(e){console.warn(e);}
     let first=true;
     UNSUBS.push(db.doc("program/state").onSnapshot(snap=>{const d=snap.exists?snap.data():null;const old=S.prog.level;S.prog=d?JSON.parse(JSON.stringify(d)):{level:1};
-      if(old!==S.prog.level){$("#levelchip").textContent=`Level ${L().n} · ${L().name}`;if(!S.touched)renderToday();}},e=>console.warn(e)));
+      if(old!==S.prog.level){setLevelChip();if(!S.touched)renderToday();}},e=>console.warn(e)));
     UNSUBS.push(db.collection("sessions").onSnapshot(snap=>{const m={};snap.docs.forEach(d=>m[d.id]=JSON.parse(JSON.stringify(d.data())));
       const local=S.sessions[TODAY];S.sessions=m;if(local&&S.touched)S.sessions[TODAY]=local;
       setSync("on",new Date().toLocaleTimeString([],{hour:"numeric",minute:"2-digit"}));
