@@ -49,7 +49,8 @@ function resample(x,from,to){
   return y;
 }
 /* YIN (de Cheveigne & Kawahara 2002) on one frame starting at `start`, window W, 16 kHz */
-function yinFrame(x,start,W){
+let LAST_AP=1;
+function yinFrame(x,start,W){LAST_AP=1;
   const tMin=Math.floor(SR/450),tMax=Math.floor(SR/65);if(start+W+tMax>x.length)return 0;
   let e=0;for(let i=0;i<W;i++){const v=x[start+i];e+=v*v;}if(Math.sqrt(e/W)<0.003)return 0;
   const d=new Float32Array(tMax+2);
@@ -58,7 +59,7 @@ function yinFrame(x,start,W){
   let tau=-1;for(let t=tMin;t<=tMax;t++){if(cm[t]<0.15){while(t+1<=tMax&&cm[t+1]<cm[t])t++;tau=t;break;}}
   if(tau<0){let best=1,bt=-1;for(let t=tMin;t<=tMax;t++)if(cm[t]<best){best=cm[t];bt=t;}if(best<0.3)tau=bt;else return 0;}
   const a=cm[tau-1],b=cm[tau],c=cm[tau+1];const den=a-2*b+c;const shift=den!==0?0.5*(a-c)/den:0;
-  const f=SR/(tau+(Math.abs(shift)<1?shift:0));return f>=65&&f<=450?f:0;
+  LAST_AP=Math.max(1e-4,Math.min(1,cm[tau]));const f=SR/(tau+(Math.abs(shift)<1?shift:0));return f>=65&&f<=450?f:0;
 }
 const st=(a,b)=>12*Math.log2(a/b);
 const median=a=>{if(!a.length)return null;const s=a.slice().sort((x,y)=>x-y);return s[Math.floor(s.length/2)];};
@@ -74,9 +75,10 @@ function analyze(samples,inSr,opts={}){
   const peakDb=20*Math.log10(rawPk+1e-9);
   // 10 ms intensity frames (25 ms window)
   const hop=160,win=400,nF=Math.max(0,Math.floor((x.length-win)/hop)+1),dB=new Float32Array(nF);
-  for(let f=0;f<nF;f++){let s=0;const o=f*hop;for(let i=0;i<win;i++){const v=x[o+i];s+=v*v;}dB[f]=Math.max(-100,20*Math.log10(Math.sqrt(s/win)+1e-9));}
+  const hf=new Float32Array(nF);
+  for(let f=0;f<nF;f++){let s=0,d=0;const o=f*hop;for(let i=0;i<win;i++){const v=x[o+i];s+=v*v;if(i){const q=v-x[o+i-1];d+=q*q;}}dB[f]=Math.max(-100,20*Math.log10(Math.sqrt(s/win)+1e-9));hf[f]=s>1e-9?10*Math.log10(d/s+1e-9):-99;}
   // pitch every 20 ms
-  const f0=new Float32Array(nF);for(let f=0;f<nF;f+=2){const v=yinFrame(x,f*hop,512);f0[f]=v;if(f+1<nF)f0[f+1]=v;}
+  const f0=new Float32Array(nF),ap=new Float32Array(nF).fill(1);for(let f=0;f<nF;f+=2){const v=yinFrame(x,f*hop,512);f0[f]=v;ap[f]=LAST_AP;if(f+1<nF){f0[f+1]=v;ap[f+1]=LAST_AP;}}
   // clean octave jumps: median-of-5 on voiced frames
   const f0c=f0.slice();for(let f=2;f<nF-2;f++){if(!f0[f])continue;const w=[f0[f-2],f0[f-1],f0[f],f0[f+1],f0[f+2]].filter(v=>v>0);if(w.length>=3){const m=median(w);if(Math.abs(st(f0[f],m))>5)f0c[f]=m;}}
   // adaptive voice activity
@@ -111,17 +113,46 @@ function analyze(samples,inSr,opts={}){
   const rangeSt=voiced.length>30?+st(pct(voiced,0.9),pct(voiced,0.1)).toFixed(1):null;
   // syllable nuclei (de Jong & Wempe 2009, simplified): intensity peaks >= 2 dB above the dip before, voiced, above threshold
   const sm=new Float32Array(nF);for(let f=0;f<nF;f++){let s=0,c=0;for(let k=-2;k<=2;k++){const g=f+k;if(g>=0&&g<nF){s+=dB[g];c++;}}sm[f]=s/c;}
-  const peakThr=Math.max(thr,pct(Array.from(sm).filter((v,i)=>act[i]),0.5)-12);let syl=0,lastDip=Infinity,lastPeakF=-99;
+  const peakThr=Math.max(thr,pct(Array.from(sm).filter((v,i)=>act[i]),0.5)-12);let syl=0,lastDip=Infinity,lastPeakF=-99;const sylF=[];
   for(let f=1;f<nF-1;f++){if(sm[f]<lastDip)lastDip=sm[f];
     if(sm[f]>sm[f-1]&&sm[f]>=sm[f+1]&&act[f]&&sm[f]>peakThr&&sm[f]-lastDip>=2){let v=false;for(let k=-3;k<=3;k++){if(f0c[f+k]>0){v=true;break;}}
-      if(v&&f-lastPeakF>=8){syl++;lastPeakF=f;lastDip=sm[f];}}}
+      if(v&&f-lastPeakF>=8){syl++;sylF.push(f);lastPeakF=f;lastDip=sm[f];}}}
   const artRate=phon>0?syl/phon:0,estWpm=span>0?Math.round(syl/1.45/span*60):null;
   // hesitation estimate: sustained voiced stretch >= 300 ms with very flat pitch and steady level (um/uh sounds)
   let hes=0;for(const s of segs){let run=[],runDb=[];for(let f=s.s;f<=s.e+1;f++){const v=f<=s.e?f0c[f]:0;if(v>0){run.push(v);runDb.push(dB[f]);}else{if(run.length>=30){const r=run.map(semis),m=mean(r),sd=Math.sqrt(mean(r.map(q=>(q-m)*(q-m)))),md=mean(runDb),sdd=Math.sqrt(mean(runDb.map(q=>(q-md)*(q-md))));if(sd<0.6&&sdd<2.5)hes++;}run=[];runDb=[];}}}
   // loudness consistency across phrases
   const lv=out.map(o=>o.level),lvSd=lv.length>1?+Math.sqrt(mean(lv.map(q=>(q-mean(lv))*(q-mean(lv))))).toFixed(1):0;
   const trails=out.map(o=>o.trail).filter(v=>v!=null);
-  return {
+  /* ---- voice quality metrics ---- */
+  const med=voiced.length?median(voiced):null;
+  // voice clarity: harmonics-to-noise estimate from YIN aperiodicity on voiced, active frames
+  const hnrs=[];for(let f=0;f<nF;f+=2)if(f0c[f]>0&&act[f]&&ap[f]<1)hnrs.push(10*Math.log10((1-ap[f])/ap[f]));
+  const hnr=hnrs.length>10?+median(hnrs).toFixed(1):null;
+  // pitch steadiness (jitter-like): median frame-to-frame pitch change inside voiced runs, percent
+  const jit=[];for(let f=2;f<nF;f+=2){if(f0c[f]>0&&f0c[f-2]>0&&act[f]&&act[f-2]){const d=Math.abs(f0c[f]-f0c[f-2])/((f0c[f]+f0c[f-2])/2);if(d<0.2)jit.push(d*100);}}
+  const wobble=jit.length>10?+median(jit).toFixed(2):null;
+  // volume steadiness (shimmer-like): median frame-to-frame level change on voiced frames, dB
+  const shm=[];for(let f=1;f<nF;f++){if(f0c[f]>0&&f0c[f-1]>0&&act[f]&&act[f-1])shm.push(Math.abs(dB[f]-dB[f-1]));}
+  const shimmer=shm.length>10?+median(shm).toFixed(2):null;
+  // consonant crispness: high-frequency share on active frames (pre-emphasis energy ratio), dB
+  const hfa=[];for(let f=0;f<nF;f++)if(act[f]&&hf[f]>-90)hfa.push(hf[f]);const crisp=hfa.length?+pct(hfa,0.75).toFixed(1):null;
+  // loudness dynamics on active frames
+  const actDb=[];for(let f=0;f<nF;f++)if(act[f])actDb.push(dB[f]);const dynRange=actDb.length>20?+(pct(actDb,0.95)-pct(actDb,0.1)).toFixed(1):null;
+  // rhythm: articulation rate per phrase and its variation; rushed statements
+  const pr=out.map((p,i)=>{const ph=phrases[i];const n=sylF.filter(f=>f>=ph.s&&f<=ph.e).length;return p.len>=0.8?n/p.len:null;}).filter(v=>v!=null);
+  const prm=mean(pr),rhythmCv=pr.length>=3&&prm>0?+(Math.sqrt(mean(pr.map(v=>(v-prm)*(v-prm))))/prm).toFixed(2):null;
+  const rushed=pr.filter(v=>v>6.2).length;
+  out.forEach((p,i)=>{const ph=phrases[i];const n=sylF.filter(f=>f>=ph.s&&f<=ph.e).length;p.rate=p.len>0?+(n/p.len).toFixed(1):null;});
+  // pauses between statements: purposeful (0.5 to 1.2 s) vs long; silence share
+  const between=gaps.filter(g=>g.len>=0.35);const purposeful=between.filter(g=>g.len>=0.5&&g.len<=1.2).length;
+  const pauseShare=span>0?+(1-phon/span).toFixed(2):null;
+  // statement endings relative to your own median pitch, and pitch drift across each statement
+  let endsLow=0,endsN=0;const decl=[];
+  phrases.forEach((ph,i)=>{const idx=[];for(let f=ph.s;f<=ph.e;f++)if(f0c[f]>0)idx.push(f);if(idx.length<8||!med)return;
+    const lastF=idx.slice(-6).map(f=>f0c[f]);endsN++;if(median(lastF)<med)endsLow++;
+    const xs=idx.map(f=>f*0.01),ys=idx.map(f=>semis(f0c[f]));const mx=mean(xs),my=mean(ys);let nu=0,de=0;xs.forEach((v,k)=>{nu+=(v-mx)*(ys[k]-my);de+=(v-mx)*(v-mx);});if(de>0&&(xs[xs.length-1]-xs[0])>=0.6)decl.push(nu/de);});
+  const endsLowPct=endsN?Math.round(endsLow/endsN*100):null,declination=decl.length?+median(decl).toFixed(2):null;
+  return {hnr,wobble,shimmer,crisp,dynRange,rhythmCv,rushed,purposeful,pauseShare,endsLow,endsN,endsLowPct,declination,
     dur:+dur.toFixed(1),sec:+span.toFixed(1),speechSec:+phon.toFixed(1),talkRatio:+(phon/span).toFixed(2),
     pauses:pauses.length,meanPause:pauses.length?+mean(pauses.map(g=>g.len)).toFixed(2):0,longest:gaps.length?+Math.max(...gaps.map(g=>g.len)).toFixed(1):0,
     freezes:freezes.length,freezeAt:freezes.map(g=>+g.at.toFixed(1)),freezeGaps:freezes.map(g=>({at:+g.at.toFixed(2),len:+g.len.toFixed(2)})),

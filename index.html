@@ -422,6 +422,26 @@ button.rec.on .dot{border-radius:7px;background:#0A0A0A;box-shadow:none;width:22
   .levelchip{max-width:none}
   .sync{padding:4px 9px}
 }
+
+/* ===== voice qualities v10 ===== */
+.qual{display:flex;flex-direction:column;gap:6px;padding:12px;border-radius:12px;background:var(--surface);border:1px solid var(--line)}
+.qtop{display:grid;grid-template-columns:1fr;gap:6px;align-items:center}
+@media (min-width:700px){.qtop{grid-template-columns:260px 1fr;gap:18px}}
+.radar{width:100%;max-width:280px;height:auto;margin:0 auto;display:block}
+.qlist{display:flex;flex-direction:column;gap:6px}
+.qitem>summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:92px 1fr 34px;gap:10px;align-items:center;min-height:40px}
+.qitem>summary::-webkit-details-marker{display:none}
+.qname{font-weight:600;font-size:14px}
+.qbar{height:10px;border-radius:5px;background:var(--sunk);overflow:hidden}
+.qbar i{display:block;height:100%;border-radius:5px;background:var(--good)}
+.qitem.warn .qbar i{background:var(--accent)} .qitem.bad .qbar i{background:var(--bad)}
+.qnum{font-family:var(--mono);text-align:right}
+.qitem ul{list-style:none;margin:4px 0 8px;padding:8px 10px;border-radius:8px;background:var(--sunk);display:flex;flex-direction:column;gap:6px}
+.qitem li{display:grid;grid-template-columns:1fr auto 60px;gap:8px;align-items:center;font-size:13px}
+.qitem li .mono{font-size:12px;color:var(--muted)}
+.qdot{height:6px;border-radius:3px;background:var(--steel);overflow:hidden}
+.qdot i{display:block;height:100%;background:var(--good)}
+.qitem li.warn .qdot i{background:var(--accent)} .qitem li.bad .qdot i{background:var(--bad)}
 </style>
 <style>:root{padding-top:env(safe-area-inset-top,0px)} html,body{margin:0} img{max-width:100%}</style>
 </head>
@@ -692,8 +712,8 @@ const BASELINE={fillers:2.7,hedges:2.7,tics:7,cf:0.2,vocab:0,scores:{clarity:3,p
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="config.js?v=6"></script>
-<script src="analyzer.js?v=6"></script>
+<script src="config.js?v=7"></script>
+<script src="analyzer.js?v=7"></script>
 <script>
 /* ================= APP ================= */
 const $=(s,r=document)=>r.querySelector(s);
@@ -744,7 +764,7 @@ function recorderPanel(onDone,opts={}){
     out.innerHTML="";if(!st){out.textContent="Too short to analyze. Record at least 2 seconds.";return;}
     if(st.empty){out.innerHTML=`<p class="muted">No speech detected. Mic peak ${st.peak} dB. Move closer to the mic and try again.</p>`;return;}
     try{st.url=URL.createObjectURL(VA.toWav(samples,sr));}catch(e){}
-    out.append(reportView(st,opts.limit,opts));S.touched=true;onDone&&onDone(st);};
+    const rv=reportView(st,opts.limit,opts);out.append(rv);S.touched=true;onDone&&onDone(st);};
   $("#"+id+"-f",el).onchange=async(e)=>{const f=e.target.files&&e.target.files[0];e.target.value="";if(!f)return;out.innerHTML=`<p class="muted analyzing">Reading ${esc(f.name)}…</p>`;
     try{const {samples,sr}=await VA.decodeFile(f);await finish(samples,sr);}catch(err){out.textContent="That file couldn't be read. Try .m4a, .mp3 or .wav.";}};
   b.onclick=async()=>{
@@ -809,7 +829,79 @@ function gauge(label,valText,val,min,max,zones,target){
   const tg=target?`<i class="tg" style="left:${p(target[0])}%;width:${p(target[1])-p(target[0])}%"></i>`:"";
   return {cls,html:`<div class="gauge ${cls}"><div class="gtop"><span class="glab">${esc(label)}</span><b class="gval">${esc(valText)}</b></div><div class="gtrack">${segs}${tg}<i class="gmark" style="left:${p(val)}%"></i></div></div>`};
 }
+/* ---------- voice qualities: smooth, calm, reassuring, confident, clear, engaging ---------- */
+const QLB=(v,good,bad)=>v==null||!isFinite(v)?null:v<=good?100:v>=bad?0:100*(bad-v)/(bad-good);
+const QHB=(v,bad,good)=>v==null||!isFinite(v)?null:v>=good?100:v<=bad?0:100*(v-bad)/(good-bad);
+const QBAND=(v,a,b,c,d)=>v==null||!isFinite(v)?null:v<b?QHB(v,a,b):v>c?QLB(v,c,d):100;
+function f0History(){try{return JSON.parse(localStorage.getItem("cv-f0hist")||"[]");}catch(e){return [];}}
+function pushF0(m){if(!m)return;try{const h=f0History();h.push(m);localStorage.setItem("cv-f0hist",JSON.stringify(h.slice(-30)));}catch(e){}}
+const ADVICE={
+  wobble:"Your pitch wavers inside words. Support the breath from the belly and hold each vowel steady.",
+  shimmer:"Your volume flickers inside words. Keep a steady stream of air through each phrase.",
+  freezes:"Long silences broke the flow. Plan a half-second pause, then the next fact.",
+  rhythm:"Your speed jumps between statements. Keep every statement at the same even pace.",
+  hes:"Um and uh sounds are leaking in. Close your mouth and pause instead.",
+  pace:"Pace is outside 125 to 150 wpm. Slow down with a full stop after each statement.",
+  elev:"Your pitch sits higher than your usual. Drop your voice to your comfortable low, it reads calmer.",
+  art:"You rush the words themselves. Give every syllable its full length.",
+  purposeful:"Add deliberate half-second pauses between statements. Silence reads as control.",
+  rushed:"Some statements were rushed. Slow the ones that carry numbers and times.",
+  falling:"Too many statements end flat or up. Drop your pitch on the last word.",
+  endsLow:"Your statement endings land above your normal pitch. Finish low, like setting down a cup.",
+  decl:"Your pitch climbs through statements. Start mid and let each sentence settle downward.",
+  rise:"Upspeak turns statements into questions. End every fact on a falling note.",
+  trail:"Volume drops at the ends. Hold full voice through the last word.",
+  levelSd:"Your volume jumps between statements. Keep one steady speaking level.",
+  longest:"Your longest pause ran too long. Keep pauses between half a second and one second.",
+  hnr:"Your voice sounds breathy or rough. Warm up with humming and speak on a relaxed, full breath.",
+  crisp:"Consonants are soft. Finish the t, k, d and s sounds at the ends of words.",
+  snr:"Background noise is high. Find a quieter spot or get closer to the mic.",
+  peak:"Mic level is off. Aim for a peak between -12 and -3 dB.",
+  range:"Your pitch range is outside 6 to 10 semitones. Stress one key word per sentence.",
+  dyn:"Your loudness barely changes. Lift the key word in each sentence a little.",
+  slow:"Pace is dragging. Keep energy up while still pausing between statements."
+};
+function scoreQualities(st){
+  const hist=f0History();const base=hist.length>=3?[...hist].sort((a,b)=>a-b)[Math.floor(hist.length/2)]:null;
+  const elev=base&&st.medianF0?+(12*Math.log2(st.medianF0/base)).toFixed(1):null;
+  const per10=st.sec>0?st.purposeful/st.sec*10:null;
+  const D=(key,name,val,score)=>({key,name,val,score:score==null?null:Math.round(score)});
+  const Q=[
+    {k:"smooth",name:"Smooth",d:[D("wobble","Pitch steadiness",st.wobble!=null?st.wobble+"% wobble":"n/a",QLB(st.wobble,1.5,4)),D("shimmer","Volume steadiness",st.shimmer!=null?st.shimmer+" dB flicker":"n/a",QLB(st.shimmer,1.5,3.5)),D("freezes","No freezes",st.freezes+"",QLB(st.freezes,0,2)),D("rhythm","Even rhythm",st.rhythmCv!=null?Math.round(st.rhythmCv*100)+"% variation":"n/a",QLB(st.rhythmCv,0.2,0.5)),D("hes","No um/uh",st.hesitations+"",QLB(st.hesitations,0,3))]},
+    {k:"calm",name:"Calm",d:[D("pace","Pace",st.estWpm?"~"+st.estWpm+" wpm":"n/a",QBAND(st.estWpm,100,125,150,175)),D("elev","Pitch vs your usual",elev==null?"building baseline":(elev>0?"+":"")+elev+" st",QLB(elev,0.5,3)),D("art","Word speed",st.artRate+" syll/s",QLB(st.artRate,5.2,6.5)),D("purposeful","Deliberate pauses",st.purposeful+"",QHB(per10,0,1)),D("rushed","Rushed statements",st.rushed+"",QLB(st.rushed,0,2))]},
+    {k:"reassuring",name:"Reassuring",d:[D("falling","Statements ending down",st.falling!=null?st.falling+"%":"n/a",QHB(st.falling,40,80)),D("endsLow","Endings below your pitch",st.endsLowPct!=null?st.endsLowPct+"%":"n/a",QHB(st.endsLowPct,40,85)),D("decl","Pitch settles through statements",st.declination!=null?(st.declination>0?"+":"")+st.declination+" st/s":"n/a",QLB(st.declination,-0.8,0.8)),D("rise","No upspeak",st.rise+"",QLB(st.rise,0,3))]},
+    {k:"confident",name:"Confident",d:[D("trail","Volume held at the end",st.trailAvg!=null?(st.trailAvg>0?"+":"")+st.trailAvg+" dB":"n/a",QHB(st.trailAvg,-5,-2)),D("levelSd","Steady volume",st.levelSd+" dB swing",QLB(st.levelSd,2.5,6)),D("hes","No um/uh",st.hesitations+"",QLB(st.hesitations,0,3)),D("rise","No upspeak",st.rise+"",QLB(st.rise,0,3)),D("longest","Longest pause",st.longest+"s",QLB(st.longest,1.2,2.5))]},
+    {k:"clear",name:"Clear",d:[D("hnr","Voice clarity",st.hnr!=null?st.hnr+" dB":"n/a",QHB(st.hnr,5,11)),D("crisp","Consonant crispness",st.crisp!=null?st.crisp+" dB":"n/a",QHB(st.crisp,-12,-5)),D("art","Word speed",st.artRate+" syll/s",QLB(st.artRate,5.5,7)),D("snr","Quiet background",st.snr+" dB",QHB(st.snr,12,25)),D("peak","Mic level",st.peak+" dB",QBAND(st.peak,-35,-18,-1,0.1))]},
+    {k:"engaging",name:"Engaging",d:[D("range","Pitch range",st.rangeSt!=null?st.rangeSt+" st":"n/a",QBAND(st.rangeSt,3,6,10,14)),D("dyn","Loudness contrast",st.dynRange!=null?st.dynRange+" dB":"n/a",QBAND(st.dynRange,5,10,25,35)),D("slow","Energy",st.estWpm?"~"+st.estWpm+" wpm":"n/a",QHB(st.estWpm,95,120))]}
+  ];
+  Q.forEach(q=>{const s=q.d.map(x=>x.score).filter(v=>v!=null);q.score=s.length?Math.round(s.reduce((a,b)=>a+b,0)/s.length):null;});
+  const all=Q.flatMap(q=>q.d.map(x=>({...x,q:q.name}))).filter(x=>x.score!=null).sort((a,b)=>a.score-b.score);
+  const worst=all[0];
+  const overall=Math.round(Q.map(q=>q.score).filter(v=>v!=null).reduce((a,b,_,arr)=>a+b/arr.length,0));
+  return {Q,overall,worst,elev,base};
+}
+function radarSvg(Q,prev){
+  const n=Q.length,cx=120,cy=112,R=82;const pt=(i,r)=>{const a=-Math.PI/2+i*2*Math.PI/n;return [cx+Math.cos(a)*r,cy+Math.sin(a)*r];};
+  let s="";[25,50,75,100].forEach(v=>{s+=`<polygon points="${Q.map((_,i)=>pt(i,R*v/100).map(z=>z.toFixed(1)).join(",")).join(" ")}" fill="none" stroke="var(--line)" stroke-width="1"/>`;});
+  Q.forEach((_,i)=>{const [x,y]=pt(i,R);s+=`<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--line)"/>`;});
+  if(prev)s+=`<polygon points="${Q.map((q,i)=>pt(i,R*(prev[q.k]||0)/100).map(z=>z.toFixed(1)).join(",")).join(" ")}" fill="none" stroke="var(--muted)" stroke-dasharray="3 3" stroke-width="1.5"/>`;
+  s+=`<polygon points="${Q.map((q,i)=>pt(i,R*(q.score||0)/100).map(z=>z.toFixed(1)).join(",")).join(" ")}" fill="#FFC61A" fill-opacity=".28" stroke="#FFC61A" stroke-width="2.5" stroke-linejoin="round"/>`;
+  Q.forEach((q,i)=>{const [x,y]=pt(i,R*(q.score||0)/100);s+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5" fill="#FFC61A"/>`;const [lx,ly]=pt(i,R+18);s+=`<text x="${lx.toFixed(1)}" y="${(ly+4).toFixed(1)}" text-anchor="middle" font-size="11" font-weight="600" fill="var(--ink)" font-family="IBM Plex Sans,sans-serif">${q.name}</text>`;});
+  return `<svg viewBox="0 0 240 228" class="radar" role="img" aria-label="Voice quality radar">${s}</svg>`;
+}
+function qualityView(st){
+  const r=scoreQualities(st);const cls=v=>v==null?"":v>=75?"good":v>=50?"warn":"bad";
+  let prev=null;try{prev=JSON.parse(localStorage.getItem("cv-qprev")||"null");}catch(e){}
+  const el=h(`<div class="qual"><div class="qtop">${radarSvg(r.Q,prev)}<div class="qlist">${r.Q.map(q=>`<details class="qitem ${cls(q.score)}"><summary><span class="qname">${q.name}</span><span class="qbar"><i style="width:${q.score||0}%"></i></span><b class="qnum">${q.score??"-"}</b></summary><ul>${q.d.map(d=>`<li class="${cls(d.score)}"><span>${esc(d.name)}</span><span class="mono">${esc(d.val)}</span><span class="qdot"><i style="width:${d.score??0}%"></i></span></li>`).join("")}</ul></details>`).join("")}</div></div>
+    ${prev?`<p class="muted" style="font-size:12px">Dashed outline: your previous take.</p>`:""}</div>`);
+  st.q=Object.fromEntries(r.Q.map(q=>[q.k,q.score]));st.qOverall=r.overall;st.qWorst=r.worst;st.pitchElev=r.elev;
+  try{localStorage.setItem("cv-qprev",JSON.stringify(st.q));}catch(e){}
+  pushF0(st.medianF0);
+  return el;
+}
+
 function reportView(st,limit,opts={}){
+  const qv=qualityView(st);
   const G=[];
   if(limit)G.push(gauge("Length",st.sec+"s of "+limit+"s",st.sec,0,limit*1.4,[[0,limit,"good"],[limit,limit*1.2,"warn"],[limit*1.2,1e9,"bad"]]));
   if(st.estWpm)G.push(gauge("Pace","~"+st.estWpm+" wpm",st.estWpm,70,200,[[0,105,"bad"],[105,120,"warn"],[120,160,"good"],[160,175,"warn"],[175,1e9,"bad"]],[130,150]));
@@ -819,16 +911,32 @@ function reportView(st,limit,opts={}){
   if(st.trailAvg!=null)G.push(gauge("Volume at statement ends",(st.trailAvg>0?"+":"")+st.trailAvg+" dB",st.trailAvg,-10,4,[[-1e9,-4,"bad"],[-4,-3,"warn"],[-3,1e9,"good"]]));
   G.push(gauge("Um / uh sounds",st.hesitations+" (estimate)",st.hesitations,0,5,[[0,1,"good"],[1,2,"warn"],[2,1e9,"bad"]]));
   G.push(gauge("Mic level",st.peak+" dB peak",st.peak,-42,0,[[-1e9,-30,"bad"],[-30,-18,"warn"],[-18,-0.8,"good"],[-0.8,1e9,"bad"]],[-12,-3]));
+  const G2=[];
+  if(st.wobble!=null)G2.push(gauge("Pitch steadiness (wobble)",st.wobble+"%",st.wobble,0,6,[[0,1.5,"good"],[1.5,3,"warn"],[3,1e9,"bad"]]));
+  if(st.shimmer!=null)G2.push(gauge("Volume steadiness (flicker)",st.shimmer+" dB",st.shimmer,0,5,[[0,1.5,"good"],[1.5,2.5,"warn"],[2.5,1e9,"bad"]]));
+  if(st.hnr!=null)G2.push(gauge("Voice clarity (harmonics to noise)",st.hnr+" dB",st.hnr,0,20,[[-1e9,5,"bad"],[5,9,"warn"],[9,1e9,"good"]]));
+  if(st.crisp!=null)G2.push(gauge("Consonant crispness",st.crisp+" dB",st.crisp,-20,0,[[-1e9,-12,"bad"],[-12,-7,"warn"],[-7,1e9,"good"]]));
+  G2.push(gauge("Word speed (articulation)",st.artRate+" syll/s",st.artRate,2,8,[[0,3.5,"warn"],[3.5,5.5,"good"],[5.5,6.5,"warn"],[6.5,1e9,"bad"]]));
+  if(st.rhythmCv!=null)G2.push(gauge("Rhythm variation",Math.round(st.rhythmCv*100)+"%",st.rhythmCv*100,0,70,[[0,20,"good"],[20,35,"warn"],[35,1e9,"bad"]]));
+  G2.push(gauge("Deliberate pauses (0.5 to 1.2s)",st.purposeful+"",st.sec?st.purposeful/st.sec*10:0,0,2,[[0,0.5,"bad"],[0.5,1,"warn"],[1,1e9,"good"]]));
+  if(st.pauseShare!=null)G2.push(gauge("Silence share",Math.round(st.pauseShare*100)+"%",st.pauseShare*100,0,60,[[0,10,"warn"],[10,30,"good"],[30,40,"warn"],[40,1e9,"bad"]]));
+  if(st.endsLowPct!=null)G2.push(gauge("Endings below your pitch",st.endsLowPct+"%",st.endsLowPct,0,100,[[0,50,"bad"],[50,75,"warn"],[75,101,"good"]]));
+  if(st.declination!=null)G2.push(gauge("Pitch drift per statement",(st.declination>0?"+":"")+st.declination+" st/s",st.declination,-4,3,[[-1e9,-0.5,"good"],[-0.5,0.5,"warn"],[0.5,1e9,"bad"]]));
+  if(st.dynRange!=null)G2.push(gauge("Loudness contrast",st.dynRange+" dB",st.dynRange,0,40,[[0,8,"warn"],[8,26,"good"],[26,1e9,"warn"]]));
+  if(st.medianF0)G2.push(gauge("Typical pitch",st.medianF0+" Hz "+noteName(st.medianF0)+(st.pitchElev!=null?` (${st.pitchElev>0?"+":""}${st.pitchElev} st vs usual)`:""),st.pitchElev??0,-4,4,[[-1e9,1,"good"],[1,2.5,"warn"],[2.5,1e9,"bad"]]));
   const on=G.filter(g=>g.cls==="good").length,tot=G.length,pctOn=on/tot;
   const R=30,C=2*Math.PI*R;
-  const ring=`<svg viewBox="0 0 80 80" class="ring" aria-hidden="true"><circle cx="40" cy="40" r="${R}" fill="none" stroke="var(--steel)" stroke-width="9"/><circle cx="40" cy="40" r="${R}" fill="none" stroke="${pctOn>=0.75?"var(--good)":pctOn>=0.5?"var(--accent)":"var(--bad)"}" stroke-width="9" stroke-linecap="round" stroke-dasharray="${(C*pctOn).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 40 40)"/><text x="40" y="46" text-anchor="middle" font-size="20" font-weight="700" fill="var(--ink)" font-family="IBM Plex Mono,monospace">${on}/${tot}</text></svg>`;
+  const ring=`<svg viewBox="0 0 80 80" class="ring" aria-hidden="true"><circle cx="40" cy="40" r="${R}" fill="none" stroke="var(--steel)" stroke-width="9"/><circle cx="40" cy="40" r="${R}" fill="none" stroke="${st.qOverall>=75?"var(--good)":st.qOverall>=55?"var(--accent)":"var(--bad)"}" stroke-width="9" stroke-linecap="round" stroke-dasharray="${(C*st.qOverall/100).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 40 40)"/><text x="40" y="44" text-anchor="middle" font-size="22" font-weight="700" fill="var(--ink)" font-family="IBM Plex Mono,monospace">${st.qOverall}</text><text x="40" y="58" text-anchor="middle" font-size="8" fill="var(--muted)" font-family="IBM Plex Mono,monospace">VOICE</text></svg>`;
+  const hard=st.peak<-30||st.freezes>0;const fix=hard||!st.qWorst?biggestIssue(st,limit):`${st.qWorst.q}: ${st.qWorst.name.toLowerCase()} scored ${st.qWorst.score}. ${ADVICE[st.qWorst.key]||""}`;
   const el=h(`<div class="report">
-    <div class="rhead">${ring}<div class="verdict"><div class="eyebrow">Biggest fix</div><p>${esc(biggestIssue(st,limit))}</p></div></div>
-    <div class="gauges">${G.map(g=>g.html).join("")}</div>
+    <div class="rhead">${ring}<div class="verdict"><div class="eyebrow">Biggest fix</div><p>${esc(fix)}</p></div></div>
+    <div class="qslot"></div>
     ${contourSvg(st)}
+    <details class="phr"><summary>All measurements (${G.length+G2.length})</summary><div class="gauges" style="margin-top:8px">${G.concat(G2).map(g=>g.html).join("")}</div><p class="muted" style="font-size:12px;margin-top:8px">${on} of ${tot} core measures on target.</p></details>
     ${st.url?`<audio controls src="${st.url}" style="width:100%"></audio>`:""}
     <details class="phr"><summary>Statement by statement (${st.phrases.length})</summary><ol>${st.phrases.map(p=>`<li><span class="mono">${p.start}s</span> ${p.len}s · ends <b class="${p.tone==="falling"?"g":p.tone==="rising"?"r":""}">${toneWord(p)}</b>${p.change!=null?` (${p.change>0?"+":""}${p.change} st)`:""}${p.trail!=null?` · end volume ${p.trail>0?"+":""}${p.trail} dB`:""}</li>`).join("")}</ol>
-    <p class="muted" style="font-size:12px;margin-top:8px">Measured on this device: voice activity, YIN pitch tracking, syllable-based pace. Pace and um/uh are estimates. Track the trend week to week.</p></details></div>`);
+    <p class="muted" style="font-size:12px;margin-top:8px">Measured on this device: voice activity, YIN pitch tracking with aperiodicity, syllable-nuclei pace, frame-level steadiness. Pace, um/uh, clarity and crispness are estimates and depend on the mic. Track the trend on the same device.</p></details></div>`);
+  $(".qslot",el).replaceWith(qv);
   return el;
 }
 /* ---------- live transcript (Web Speech API, where the browser has it) ---------- */
@@ -885,7 +993,7 @@ function repPanel(ctx){
   $("#"+id+"-save",el).onclick=async()=>{if(ctx.getPrompt)ctx.prompt=ctx.getPrompt();const a=upd();if(!a.words&&!audio){toast("Record or add your answer first");return;}
     const f=self?self.read():fb;const rep={block:ctx.block,prompt:ctx.prompt,text:txt.value,words:a.words,fillers:a.fillers,hedges:a.hedges,tics:a.tics,f100:a.f100,h100:a.h100,audio:audio?{...audio,url:undefined}:null,fb:f||null,ts:Date.now()};
     const s=sess();s.level=S.prog.level||1;if(saved)s.reps.pop();s.reps.push(rep);
-    if(ctx.bench){s.bench={prompt:ctx.prompt,f100:a.f100,h100:a.h100,tics:a.tics,words:a.words,sec:audio?audio.sec:null,freezes:audio?audio.freezes:null,trail:audio?audio.trailAvg:null,falling:audio?audio.falling:null,range:audio?audio.rangeSt:null,cf:f?!!f.conclusionFirst:null,scores:f?f.scores:null};}
+    if(ctx.bench){s.bench={prompt:ctx.prompt,f100:a.f100,h100:a.h100,tics:a.tics,words:a.words,sec:audio?audio.sec:null,freezes:audio?audio.freezes:null,trail:audio?audio.trailAvg:null,falling:audio?audio.falling:null,range:audio?audio.rangeSt:null,q:audio?audio.q||null:null,vq:audio?audio.qOverall??null:null,cf:f?!!f.conclusionFirst:null,scores:f?f.scores:null};}
     saved=true;await saveSession();toast(ctx.bench?"Benchmark saved":"Rep saved");ctx.onSaved&&ctx.onSaved();};
   return el;
 }
@@ -1025,13 +1133,13 @@ function renderAnalyze(){
   v.append(rp);
   const sv=h(`<button class="primary" type="button" disabled>Save this take to today's progress</button>`);
   sv.onclick=async()=>{if(!last){toast("Record a take first");return;}const txt=rp.querySelector("textarea").value;const a=analyzeText(txt);
-    const s=sess();s.level=s.level||S.prog.level||1;s.analyzer={falling:last.falling,freezes:last.freezes,wpm:a.words&&last.sec?Math.round(a.words/last.sec*60):last.estWpm,range:last.rangeSt,trail:last.trailAvg,hesitations:last.hesitations,peak:last.peak,sec:last.sec,f100:a.words?a.f100:null,h100:a.words?a.h100:null,tics:a.words?a.tics:null,source:"app"};
+    const s=sess();s.level=s.level||S.prog.level||1;s.analyzer={falling:last.falling,freezes:last.freezes,wpm:a.words&&last.sec?Math.round(a.words/last.sec*60):last.estWpm,range:last.rangeSt,trail:last.trailAvg,hesitations:last.hesitations,peak:last.peak,sec:last.sec,f100:a.words?a.f100:null,h100:a.words?a.h100:null,tics:a.words?a.tics:null,source:"app",q:last.q||null,vq:last.qOverall??null,hnr:last.hnr,wobble:last.wobble,shimmer:last.shimmer};
     await saveSession();toast("Saved to today's progress");};
   v.append(sv);
 }
 /* ---------- PROGRESS ---------- */
 function benchPoints(){return sortedSessions().filter(s=>s.bench||s.analyzer).map(s=>{const a=s.analyzer||{},b=s.bench||{};return {date:s.date,level:s.level,baseline:!!s.baseline,
-  f100:a.f100!=null?a.f100:b.f100,h100:a.h100!=null?a.h100:b.h100,score:avgScore(b.scores),falling:a.falling!=null?a.falling:b.falling,freezes:a.freezes!=null?a.freezes:b.freezes,sec:b.sec,cf:b.cf,scores:b.scores,tics:a.tics!=null?a.tics:b.tics};});}
+  f100:a.f100!=null?a.f100:b.f100,h100:a.h100!=null?a.h100:b.h100,score:avgScore(b.scores),falling:a.falling!=null?a.falling:b.falling,vq:a.vq!=null?a.vq:b.vq,freezes:a.freezes!=null?a.freezes:b.freezes,sec:b.sec,cf:b.cf,scores:b.scores,tics:a.tics!=null?a.tics:b.tics};});}
 function chart(title,pts,key,opts){
   const data=pts.filter(p=>p[key]!=null&&isFinite(p[key]));const W=340,H=170,pl=34,pr=12,pt=14,pb=26;
   const ys=data.map(p=>p[key]).concat([opts.target,opts.base].filter(x=>x!=null));const ymax=opts.max!=null?opts.max:Math.max(1,...ys)*1.15,ymin=opts.min||0;
@@ -1084,6 +1192,7 @@ function renderProgress(){
   ch.append(chart("Hedges per 100 words",pts,"h100",{base:BASELINE.hedges,target:g.hedges}));
   ch.append(chart("Average rep score",pts,"score",{min:1,max:5,base:+(avgScore(BASELINE.scores)).toFixed(1),target:4}));
   ch.append(chart("Falling tone, % of statements",pts,"falling",{min:0,max:100,target:lv.n>=2?70:60,unit:"%"}));
+  ch.append(chart("Voice score (smooth, calm, reassuring, confident, clear, engaging)",pts,"vq",{min:0,max:100,target:75}));
   v.append(ch);
   v.append(h(`<p class="muted" style="font-size:13px">Fillers and hedges use voice-analyzer.py numbers when you paste them in Log, otherwise your dictated text. Dictation drops some fillers, so treat text counts as a floor.</p>`));
   v.append(calendar());
