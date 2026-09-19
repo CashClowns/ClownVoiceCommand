@@ -294,6 +294,32 @@ nav.tabs button[aria-selected="true"]{margin-bottom:0}
 .gate .pill.neutral{background:var(--sunk);color:var(--muted);border-color:var(--line)}
 @media (max-width:420px){.cal{grid-template-rows:repeat(7,14px);grid-auto-columns:14px;gap:3px}.cal i{width:14px;height:14px}}
 
+.introwrap{position:fixed;inset:0;z-index:40;background:radial-gradient(120% 90% at 50% 0%,#131A26 0%,#070910 60%);display:flex;flex-direction:column;overflow:auto;padding:max(16px,env(safe-area-inset-top,0px)) 16px calc(20px + env(safe-area-inset-bottom,0px))}
+.introwrap .ibrand{display:flex;align-items:center;gap:10px;justify-content:center;margin:6px 0 14px}
+.introwrap .ibrand img{width:34px;height:34px;border-radius:9px}
+.introwrap .ibrand h1{font-size:21px;margin:0;letter-spacing:-.01em}
+.ipanel{flex:1;display:flex;flex-direction:column;gap:12px;max-width:560px;width:100%;margin:0 auto;padding-bottom:6px}
+.ipanel h2{font-size:26px;line-height:1.15;margin:0}
+.ipanel .lede{color:var(--muted);font-size:15px;line-height:1.5;margin:0}
+.ilist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.ilist li{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:11px 12px}
+.ilist .ic{flex:0 0 26px;height:26px;border-radius:8px;background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:13px;display:grid;place-items:center;box-shadow:0 2px 0 #B98800}
+.ilist b{display:block;font-size:15px;margin-bottom:1px}
+.ilist span{color:var(--muted);font-size:13.5px;line-height:1.45}
+.ivs{display:flex;flex-direction:column;gap:8px}
+.ivs .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ivs .them,.ivs .us{border-radius:12px;padding:10px 11px;font-size:13.5px;line-height:1.4}
+.ivs .them{background:rgba(255,255,255,.03);border:1px solid var(--line);color:var(--muted)}
+.ivs .us{background:color-mix(in srgb,var(--accent) 14%,transparent);border:1px solid var(--accent);color:var(--ink)}
+.ivs .lbl{display:block;font-size:11px;letter-spacing:.09em;text-transform:uppercase;margin-bottom:3px;opacity:.85}
+.inav{position:sticky;bottom:0;background:#070910;box-shadow:0 -14px 22px 10px #070910;padding-top:12px;margin-top:14px;max-width:560px;width:100%;margin-inline:auto}
+.idots{display:flex;gap:6px;justify-content:center;margin-bottom:10px}
+.idots i{width:7px;height:7px;border-radius:99px;background:var(--line);transition:.2s}
+.idots i.on{background:var(--accent);width:20px}
+.inav .row{gap:10px}
+.introwrap .skip{align-self:center;margin-top:8px}
+@media (max-height:920px){.ipanel h2{font-size:23px}.ipanel .lede{font-size:14px}.ipanel{gap:10px}.ilist{gap:8px}.ilist li{padding:9px 11px}.ilist b{font-size:14.5px}.ilist span{font-size:13px}.ivs .them,.ivs .us{font-size:13px;padding:9px 10px}.introwrap .ibrand{margin:2px 0 10px}}
+@media (min-width:560px){.ipanel h2{font-size:30px}}
 .gatewrap{position:fixed;inset:0;z-index:20;background:rgba(5,7,11,.92);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:grid;place-items:center;padding:16px;overflow:auto}
 .gatecard{width:min(440px,100%)}
 .gatecard .brand h1{font-size:24px}
@@ -838,8 +864,8 @@ const BASELINE={fillers:2.7,hedges:2.7,tics:7,cf:0.2,vocab:0,scores:{clarity:3,p
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="config.js?v=26"></script>
-<script src="analyzer.js?v=26"></script>
+<script src="config.js?v=27"></script>
+<script src="analyzer.js?v=27"></script>
 <script>
 /* ================= APP ================= */
 const $=(s,r=document)=>r.querySelector(s);
@@ -1194,7 +1220,7 @@ function trxSet(on){try{localStorage.setItem("cvc-trx",on?"1":"0");}catch(e){}}
 function trxSupported(){return typeof Worker!=="undefined"&&typeof WebAssembly!=="undefined";}
 function trxWorker(){
   if(TRX.w)return TRX.w;
-  try{TRX.w=new Worker("whisper-worker.js?v=26",{type:"module"});}catch(e){return null;}
+  try{TRX.w=new Worker("whisper-worker.js?v=27",{type:"module"});}catch(e){return null;}
   TRX.w.onmessage=(ev)=>{const m=ev.data||{};
     if(m.type==="device"){TRX.device=m.device;}
     if(m.type==="progress"&&TRX.onProgress)TRX.onProgress(m);
@@ -2206,6 +2232,7 @@ function renderMore(){
   const acc=h(`<div class="morebox"></div>`);acc.append(profileCard(()=>{show("more");}));acc.append(settingsCard());v.append(acc);
   const logWrap=h(`<details class="guide big" open><summary>Your data and session history</summary><div id="logbox"></div></details>`);v.append(logWrap);renderLog($("#logbox",logWrap));
   const planWrap=h(`<details class="guide big"><summary>Training plan and levels</summary><div id="planbox"></div></details>`);v.append(planWrap);renderPlan($("#planbox",planWrap));
+  const tour=h(`<button type="button" class="linkbtn" style="margin-top:6px">How this app works</button>`);tour.onclick=()=>showIntro(true);v.append(tour);
 }
 /* ---------- sync button ---------- */
 function setSync(state,extra){const b=$("#sync");if(!b)return;b.classList.toggle("on",state==="on");b.classList.toggle("busy",state==="busy");
@@ -2404,8 +2431,70 @@ async function deleteAccountFlow(box,u){
     }catch(x){b.disabled=false;b.textContent="Delete everything";toast(authMsg(x));}
   };
 }
+/* ---------- first run: what this is, why it is different, how it works ---------- */
+function introSeen(){try{return localStorage.getItem("cvc-intro")==="1";}catch(e){return false;}}
+function markIntro(){try{localStorage.setItem("cvc-intro","1");}catch(e){}}
+const INTRO=[
+ {h:"Your voice, measured. Not guessed.",
+  lede:"Twelve minutes a day. You speak, the app measures what the microphone actually recorded, then gives you the one fix that matters and has you say it again.",
+  list:[["1","Say it","One real prompt from your own job, answered out loud against the clock."],
+        ["2","See it","Forty measurements from the recording, scored into six qualities, plus a check on your words."],
+        ["3","Fix one thing","The lowest driver becomes a two minute drill with a pass mark."],
+        ["4","Prove it","Say it again and the app shows the two takes side by side."]]},
+ {h:"What it listens to",
+  lede:"All of this runs on your device. Your recordings are never uploaded, and nothing here is estimated from anyone else's voice.",
+  list:[["♪","Pitch and endings","Whether each statement lands down like a fact or lifts like a question, and how far it settles."],
+        ["॥","Pauses","Every silence over a quarter second, and whether it landed at a full stop or mid sentence, which is the difference between control and searching."],
+        ["◎","Voice quality","Clarity, steadiness, breathiness against pressed tone, harmonic richness, background noise and mic level."],
+        ["◈","Resonance and articulation","Vocal tract formants, so it can tell when your vowels stop moving. That is what mumbling is."],
+        ["~","Breath and rhythm","Where you breathe, how often, and whether your syllables carry a natural long and short pattern."],
+        ["A","Your words","Your recording is transcribed on the device, then checked for the opening, the numbers, ownership, the close, weak words and reading level."]]},
+ {h:"Why this beats the others",
+  lede:"Most apps score either your delivery or your wording. None score both against one rubric, judge where your pauses land, or know what you do for a living.",
+  vs:[["They tell you","You said 14 filler words and spoke at 150 words per minute."],
+      ["This tells you","Your pause at 6.4 seconds landed mid sentence after the word because, which reads as searching. You stressed basically instead of the number. Say it again with the number loudest."]],
+  list:[["→","It knows your job","Pick nurse, lawyer, sales, teacher, engineer or your own theme, and every prompt, model answer, structure and rubric changes with it."],
+        ["→","It maps emphasis to your words","Loudness, pitch and duration are lined up with the transcript, so it names the words you actually stressed."],
+        ["→","It never invents a number","Every figure comes from your own recording. No stock baselines."]]},
+ {h:"How you get better",
+  lede:"Nothing improves from one take. The app is built around repetition you can measure.",
+  list:[["↑","Four stages","Start by reading a model answer out loud. Build to answering a cold question with no structure on screen."],
+        ["◆","Levels with real gates","You move up when your last three takes hit the numbers, not when the calendar says so."],
+        ["↺","Same fix twice means a harder drill","If a weakness shows up three sessions running, the app says so and changes the exercise."],
+        ["⇄","Phone and computer","One account, one log. Start on the laptop, finish on the phone."],
+        ["●","Optional AI coach","Add a Claude key and you also get a rewrite in your own voice, a spoken grade level and better word swaps."]]}
+];
+function introView(){
+  const wrap=h(`<div class="introwrap" id="intro"><div class="ibrand">${document.querySelector(".brand").innerHTML}</div><div class="ipanel" id="ipanel"></div>
+    <div class="inav"><div class="idots" id="idots"></div><div class="row"><button type="button" class="primary bigstart" id="inext" style="flex:1">Next</button></div>
+    <button type="button" class="linkbtn skip" id="iskip">Skip the tour</button></div></div>`);
+  const body=$("#ipanel",wrap),dots=$("#idots",wrap),next=$("#inext",wrap);
+  let i=0;
+  const draw=()=>{
+    const p=INTRO[i];
+    body.innerHTML=`<h2>${esc(p.h)}</h2><p class="lede">${esc(p.lede)}</p>
+      ${p.vs?`<div class="ivs"><div class="them"><span class="lbl">Other apps</span>${esc(p.vs[0][1])}</div><div class="us"><span class="lbl">ClownVoiceAI</span>${esc(p.vs[1][1])}</div></div>`:""}
+      <ul class="ilist">${p.list.map(([ic,t,d])=>`<li><span class="ic">${esc(ic)}</span><span><b>${esc(t)}</b><span>${esc(d)}</span></span></li>`).join("")}</ul>`;
+    dots.innerHTML=INTRO.map((_,k)=>`<i class="${k===i?"on":""}"></i>`).join("");
+    next.textContent=i===INTRO.length-1?"Set up my practice":"Next";
+    wrap.scrollTop=0;
+  };
+  next.onclick=()=>{if(i<INTRO.length-1){i++;draw();}else closeIntro(wrap);};
+  $("#iskip",wrap).onclick=()=>closeIntro(wrap);
+  draw();return wrap;
+}
+function showIntro(force){
+  if(!force&&introSeen())return false;
+  const old=$("#intro");if(old)old.remove();
+  document.body.append(introView());
+  try{document.body.style.overflow="hidden";}catch(e){}
+  return true;
+}
+function closeIntro(wrap){markIntro();wrap.remove();try{document.body.style.overflow="";}catch(e){}
+  renderToday();if(window.fbAuth&&!fbAuth.currentUser)showGate();}
 function showGate(){
   let g=$("#gate");if(g)g.remove();if(window.fbAuth&&fbAuth.currentUser)return;
+  if($("#intro"))return; /* the tour comes first */
   g=h(`<div id="gate" class="gatewrap"><div class="card gatecard"><div class="brand" style="justify-content:center">${document.querySelector(".brand").innerHTML}</div><h2 style="text-align:center">Your voice, scored</h2><p class="muted" style="text-align:center;font-size:14px;margin:-4px 0 4px">Sign in so your progress follows you from phone to computer.</p></div></div>`);
   $(".gatecard",g).append(authForm());
   const skip=h(`<button type="button" style="margin-top:4px">Use it on this device only</button>`);skip.onclick=()=>g.remove();$(".gatecard",g).append(skip);
@@ -2452,6 +2541,7 @@ let UNSUBS=[];
       if(S.view==="progress")renderProgress();if(S.view==="more"&&!document.activeElement.matches("textarea,input"))renderMore();},e=>{console.warn(e);setSync("off");}));
   });
 })();
+showIntro();
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));}
 
 </script>
