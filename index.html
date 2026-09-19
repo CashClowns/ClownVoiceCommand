@@ -513,6 +513,13 @@ button.rec.on .dot{border-radius:7px;background:#0A0A0A;box-shadow:none;width:22
 .catbtn span{font-size:13px;color:var(--muted)}
 .catbtn.on{background:var(--y-grad);color:#0A0A0A;border:1px solid #FFE27A;border-bottom-color:#B98800;box-shadow:var(--y-shadow)}
 .catbtn.on span{color:#3a3000}
+
+.catlist.dim .catbtn:not(.on){opacity:.45}
+.themecard{margin-top:8px}
+.themeon{display:flex;flex-direction:column;gap:4px;padding:12px 14px;border-radius:12px;background:var(--y-grad);color:#0A0A0A;box-shadow:var(--y-shadow)}
+.themeon b{font-size:16px}
+.themeon span{font-size:13px;color:#3a3000}
+.themeon .linkbtn{color:#3a3000;align-self:flex-start;padding:0;min-height:32px}
 </style>
 <style>:root{padding-top:env(safe-area-inset-top,0px)} html,body{margin:0} img{max-width:100%}</style>
 </head>
@@ -782,8 +789,8 @@ const BASELINE={fillers:2.7,hedges:2.7,tics:7,cf:0.2,vocab:0,scores:{clarity:3,p
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="config.js?v=16"></script>
-<script src="analyzer.js?v=16"></script>
+<script src="config.js?v=18"></script>
+<script src="analyzer.js?v=18"></script>
 <script>
 /* ================= APP ================= */
 const $=(s,r=document)=>r.querySelector(s);
@@ -1323,23 +1330,51 @@ const CATS={
 };
 const AUDIENCES={engineer:"an engineer who wants the mechanism",manager:"a manager who wants impact and dates",exec:"an executive who wants the conclusion and the decision",client:"a client or patient who wants reassurance and a time"};
 const TOPIC_NOTE=t=>` Context: ${t}.`;
+const THEME_TEMPLATES={
+ answer:(t,k)=>`Someone asks you a hard question about ${t}. Answer it in ${k.limit} seconds, answer first, then one piece of evidence, then the next step.`,
+ status:(t,k)=>`Give a ${k.limit}-second update on ${t}: where it stands, what it affects, what you are doing, and when you will report again.`,
+ hold:(t,k)=>`Someone pushes back hard on your position about ${t}. Hold it without getting defensive: acknowledge, one fact, the alternative, ask for the decision.`,
+ exec:(t,k)=>`Brief a decision maker on ${t} in ${k.limit} seconds: conclusion, impact, recommendation, decision needed.`};
+function kindKey(kind){const ks=CATS[profile().cat].kinds;return Object.keys(ks).find(k=>ks[k]===kind)||"answer";}
 function profile(){const p=(S.prog&&S.prog.profile)||{};let cat=p.cat||p.role||"pressure";if(!CATS[cat])cat="pressure";return {cat,audience:p.audience||"client",topic:p.topic||"",set:!!p.set};}
 async function setProfile(patch){S.prog.profile=Object.assign(profile(),patch);await saveProg();}
 function kindsFor(){return Object.values(CATS[profile().cat].kinds);}
 function kindByIndex(di,levelN){const ks=Object.values(CATS[profile().cat].kinds);return ks[di%(levelN>=3?4:2)];}
-function promptFor(kind,di){const pr=profile();const base=pick(kind.prompts,di);return pr.topic?base+TOPIC_NOTE(pr.topic):base;}
+function promptFor(kind,di){const pr=profile();
+  if(pr.topic){const gen=(pr.themePrompts||{})[kindKey(kind)];if(gen&&gen.length)return pick(gen,di);
+    return (THEME_TEMPLATES[kindKey(kind)]||THEME_TEMPLATES.answer)(pr.topic,kind);}
+  return pick(kind.prompts,di);}
+async function generateThemePrompts(topic){
+  if(!S.sample)return null;
+  const cat=CATS[profile().cat];
+  const ask=`Write speaking-practice prompts about "${topic}" for someone who practises ${cat.name} (${cat.sub}), speaking to ${AUDIENCES[profile().audience]}.
+Return JSON only: {"scripts":["..","..",".."],"answer":["..","..",".."],"status":["..","..",".."],"hold":["..","..",".."],"exec":["..","..",".."]}
+scripts: three model answers about ${topic}, written the way a confident speaker would say them out loud, 4 short sentences each, separated by " / " between sentences, with a number or a time in each.
+answer: a hard question someone asks them about ${topic}. status: a situation where they give a short update about ${topic}. hold: someone pushes back on their position about ${topic}. exec: they brief a decision maker about ${topic}.
+Each prompt is one or two sentences, concrete, with a named situation and a number or a time where it fits. No em dashes, no semicolons.`;
+  try{const r=await askJSON(ask);return r&&r.answer?r:null;}catch(e){return null;}
+}
 function profileCard(onDone){
   const pr=profile();const id=uid();
   const el=h(`<div class="card setup"><h2>Pick your area</h2>
     <p class="muted" style="font-size:14px">Prompts, structures and scoring follow this.</p>
     <div class="catlist" id="${id}-c">${Object.entries(CATS).map(([k,v])=>`<button type="button" data-k="${k}" class="catbtn ${pr.cat===k?"on":""}"><b>${esc(v.name)}</b><span>${esc(v.sub)}</span></button>`).join("")}</div>
     <div><label>Who you speak to most</label><div class="chips" id="${id}-a">${Object.keys(AUDIENCES).map(k=>`<button type="button" data-k="${k}" class="chip ${pr.audience===k?"on":""}">${esc(k[0].toUpperCase()+k.slice(1))}</button>`).join("")}</div></div>
-    <div><label for="${id}-t">Topic or theme (optional)</label><input id="${id}-t" type="text" placeholder="e.g. Intune rollout, Q4 renewal, my architect interview" value="${esc(pr.topic)}"></div>
+    <div><label for="${id}-t">Your own topic or theme (optional)</label><input id="${id}-t" type="text" placeholder="e.g. Acting, Intune rollout, my architect interview" value="${esc(pr.topic)}">
+      <div id="${id}-th" class="themecard" hidden></div></div>
     <button class="primary bigstart" type="button" id="${id}-s">Save and start</button></div>`);
   el.querySelectorAll(".catlist,.chips").forEach(box=>box.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;[...box.children].forEach(c=>c.classList.remove("on"));b.classList.add("on");}));
-  $("#"+id+"-s",el).onclick=async()=>{const c=$("#"+id+"-c .on",el),a=$("#"+id+"-a .on",el);
-    await setProfile({cat:c?c.dataset.k:"pressure",audience:a?a.dataset.k:"client",topic:$("#"+id+"-t",el).value.trim(),set:true});
-    toast("Saved");onDone?onDone():renderHome();};
+  const ti=$("#"+id+"-t",el),tc=$("#"+id+"-th",el),cl=$("#"+id+"-c",el);
+  const paint=()=>{const v=ti.value.trim();tc.hidden=!v;cl.classList.toggle("dim",!!v);
+    if(v)tc.innerHTML=`<div class="themeon"><b>Theme: ${esc(v)}</b><span>Every prompt will be about ${esc(v)}. Structures still come from the area above.</span><button type="button" class="linkbtn" id="${id}-clear">Clear theme</button></div>`;
+    const c=$("#"+id+"-clear",tc);if(c)c.onclick=()=>{ti.value="";paint();};};
+  ti.addEventListener("input",paint);paint();
+  $("#"+id+"-s",el).onclick=async(e)=>{const c=$("#"+id+"-c .on",el),a=$("#"+id+"-a .on",el);const topic=$("#"+id+"-t",el).value.trim();
+    const b=e.currentTarget;b.disabled=true;
+    const changed=topic&&topic!==pr.topic;
+    await setProfile({cat:c?c.dataset.k:"pressure",audience:a?a.dataset.k:"client",topic,set:true,themePrompts:changed?null:(S.prog.profile||{}).themePrompts});
+    if(changed&&S.sample){b.textContent="Writing prompts about "+topic+"…";const gen=await generateThemePrompts(topic);if(gen)await setProfile({themePrompts:gen});}
+    b.disabled=false;toast(topic?"Theme set: "+topic:"Saved");onDone?onDone():renderHome();};
   return el;
 }
 
@@ -1391,8 +1426,10 @@ function todayFocus(){
 function sessionPlan(){
   const lv=L(),di=dayIndex();
   const kind=kindByIndex(di,lv.n);const stg=stageInfo();const pr=profile();
-  const script=pick(MODELS[pr.cat]||MODELS.pressure,di);
-  return {lv,di,kind,prompt:promptFor(kind,di),script,stage:stg,focus:todayFocus(),profile:pr};
+  const themeScripts=(pr.themePrompts||{}).scripts;
+  const script=pr.topic&&themeScripts&&themeScripts.length?pick(themeScripts,di):pick(MODELS[pr.cat]||MODELS.pressure,di);
+  const scriptIsTheme=!!(pr.topic&&themeScripts&&themeScripts.length);
+  return {lv,di,kind,prompt:promptFor(kind,di),script,scriptIsTheme,stage:stg,focus:todayFocus(),profile:pr};
 }
 function renderHome(){
   const v=$("#v-today");v.innerHTML="";setTimeout(showInstall,0);
@@ -1449,9 +1486,9 @@ function stepView(id,state,go,total){
   if(id==="say"){
     const stg=p.stage.stage;
     const keywords=(p.script.split(" / ").map(s=>s.trim().split(/\s+/).slice(0,2).join(" ")).slice(0,4));
-    const head=stg===1?`<div class="eyebrow">Stage 1 · read it out loud in ${p.kind.limit}s</div><h3 class="say">${esc(p.script).replace(/ \/ /g,' <span class="slash">/</span> ')}</h3><p class="muted">Every slash is a full stop. Drop your pitch on the last word of each part.</p>`
+    const head=stg===1?`<div class="eyebrow">Stage 1 · read it out loud in ${p.kind.limit}s</div><h3 class="say">${esc(p.script).replace(/ \/ /g,' <span class="slash">/</span> ')}</h3><p class="muted">Every slash is a full stop. Drop your pitch on the last word of each part.${p.profile.topic&&!p.scriptIsTheme?" This script is from your area. Add a Claude API key in More to get scripts about "+esc(p.profile.topic)+".":""}</p>`
       :stg===2?`<div class="eyebrow">Stage 2 · read once, then say it from the keywords</div><h3 class="say">${esc(p.script).replace(/ \/ /g,' <span class="slash">/</span> ')}</h3><p class="muted">Now cover the script. Keywords: ${keywords.map(esc).join(" · ")}</p>`
-      :`<div class="eyebrow">${esc(p.kind.name)} · say it in ${p.kind.limit}s</div><h3>${esc(p.prompt)}</h3>${stg===3?`<p class="muted">Structure: ${p.kind.structure.map(esc).join(" → ")}</p>`:`<p class="muted">No structure on screen. Answer cold.</p>`}`;
+      :`<div class="eyebrow">${esc(p.kind.name)}${p.profile.topic?" · "+esc(p.profile.topic):""} · say it in ${p.kind.limit}s</div><h3>${esc(p.prompt)}</h3>${stg===3?`<p class="muted">Structure: ${p.kind.structure.map(esc).join(" → ")}</p>`:`<p class="muted">No structure on screen. Answer cold.</p>`}`;
     const el=h(`<div class="stepbox">${head}
       <div class="recslot"></div>
       <details class="words"${stg<=2?"":""}><summary>Your words · tap to add</summary><textarea id="saytext" aria-label="What you said" placeholder="Fills in while you record where supported. Otherwise tap the keyboard mic and speak."></textarea></details></div>`);
