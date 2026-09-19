@@ -99,6 +99,58 @@ function specFrame(x,start){
   const cpps=20*Math.log10(pk+1e-12)-(b0+b1*pkI);
   return {alpha,hammar,cpps};
 }
+/* ---------- LPC formants (vocal tract resonances) ----------
+   Autocorrelation LPC, Levinson-Durbin, then peak picking on the spectral envelope. */
+function lpcFormants(x,start,W){
+  const N=W;if(start+N>=x.length||start<1)return null;
+  const buf=new Float64Array(N);let e0=0;
+  for(let i=0;i<N;i++){const s0=x[start+i]-0.97*x[start+i-1];const w=0.54-0.46*Math.cos(2*Math.PI*i/(N-1));buf[i]=s0*w;e0+=buf[i]*buf[i];}
+  if(e0<1e-7)return null;
+  const order=14,r=new Float64Array(order+1);
+  for(let k=0;k<=order;k++){let s1=0;for(let i=k;i<N;i++)s1+=buf[i]*buf[i-k];r[k]=s1;}
+  if(r[0]<=0)return null;
+  const a=new Float64Array(order+1);let err=r[0];a[0]=1;
+  for(let i=1;i<=order;i++){
+    let acc=r[i];for(let j=1;j<i;j++)acc-=a[j]*r[i-j];
+    const k=acc/err;const prev=a.slice();
+    for(let j=1;j<i;j++)a[j]=prev[j]-k*prev[i-j];
+    a[i]=k;err*=(1-k*k);if(!(err>0))return null;
+  }
+  const M=400,mag=new Float64Array(M);
+  for(let m=0;m<M;m++){const w=Math.PI*m/M;let re=1,im=0;
+    for(let j=1;j<=order;j++){re-=a[j]*Math.cos(w*j);im+=a[j]*Math.sin(w*j);}
+    mag[m]=1/Math.sqrt(re*re+im*im+1e-12);}
+  const hz=m=>m*(SR/2)/M;const peaks=[];
+  for(let m=2;m<M-2;m++)if(mag[m]>mag[m-1]&&mag[m]>=mag[m+1]){const f=hz(m);if(f>180&&f<4200)peaks.push(f);}
+  if(peaks.length<2)return null;
+  const F1=peaks.find(f=>f>=200&&f<=1000);if(!F1)return null;
+  const F2=peaks.find(f=>f>=F1+120&&f<=2600);if(!F2)return null;
+  const F3=peaks.find(f=>f>=F2+250&&f<=3900)||null;
+  return {F1,F2,F3};
+}
+/* H1 minus H2: how breathy or pressed the voice is */
+function h1h2(x,start,W,f0){
+  if(!f0||start+W>=x.length)return null;
+  const N=1024;if(W<N)return null;
+  const re=new Float64Array(N),im=new Float64Array(N);
+  for(let i=0;i<N;i++){const w=0.54-0.46*Math.cos(2*Math.PI*i/(N-1));re[i]=x[start+i]*w;}
+  fftInPlace(re,im);
+  const binHz=SR/N;
+  const amp=(f)=>{const b=Math.round(f/binHz);if(b<1||b>=N/2)return null;
+    let best=0;for(let k=b-1;k<=b+1;k++){const m=Math.sqrt(re[k]*re[k]+im[k]*im[k]);if(m>best)best=m;}return best;};
+  const A1=amp(f0),A2=amp(2*f0);if(!A1||!A2)return null;
+  return 20*Math.log10((A1+1e-12)/(A2+1e-12));
+}
+function fftInPlace(re,im){
+  const n=re.length;for(let i=1,j=0;i<n;i++){let bit=n>>1;for(;j&bit;bit>>=1)j^=bit;j^=bit;
+    if(i<j){let t=re[i];re[i]=re[j];re[j]=t;t=im[i];im[i]=im[j];im[j]=t;}}
+  for(let len=2;len<=n;len<<=1){const ang=-2*Math.PI/len,wr=Math.cos(ang),wi=Math.sin(ang);
+    for(let i=0;i<n;i+=len){let cr=1,ci=0;
+      for(let k=0;k<len/2;k++){const ur=re[i+k],ui=im[i+k];
+        const vr=re[i+k+len/2]*cr-im[i+k+len/2]*ci,vi=re[i+k+len/2]*ci+im[i+k+len/2]*cr;
+        re[i+k]=ur+vr;im[i+k]=ui+vi;re[i+k+len/2]=ur-vr;im[i+k+len/2]=ui-vi;
+        const ncr=cr*wr-ci*wi;ci=cr*wi+ci*wr;cr=ncr;}}}
+}
 /* ---------- full analysis ---------- */
 function analyze(samples,inSr,opts={}){
   const x=resample(samples,inSr,SR);const dur=x.length/SR;
@@ -205,7 +257,56 @@ function analyze(samples,inSr,opts={}){
     const lastF=idx.slice(-6).map(f=>f0c[f]);endsN++;if(median(lastF)<med)endsLow++;
     const xs=idx.map(f=>f*0.01),ys=idx.map(f=>semis(f0c[f]));const mx=mean(xs),my=mean(ys);let nu=0,de=0;xs.forEach((v,k)=>{nu+=(v-mx)*(ys[k]-my);de+=(v-mx)*(v-mx);});if(de>0&&(xs[xs.length-1]-xs[0])>=0.6)decl.push(nu/de);});
   const endsLowPct=endsN?Math.round(endsLow/endsN*100):null,declination=decl.length?+median(decl).toFixed(2):null;
-  return {cpps,alphaRatio,hammarberg,pauseRate,meanPause250,pauses250:allGaps.length,boundaryPauses:boundary.length,midPauses:mid.length,speechRate,longestRun,f0sd,riseSlope,fallSlope,hnr,wobble,shimmer,crisp,dynRange,rhythmCv,rushed,purposeful,pauseShare,endsLow,endsN,endsLowPct,declination,
+  /* formants, on strong voiced frames only */
+  const F1s=[],F2s=[],F3s=[],hh=[];
+  for(let f=0;f<nF;f+=3){
+    if(!act[f]||!f0c[f]||dB[f]<thr+4)continue;
+    const st0=f*hop;
+    const fm=lpcFormants(x,st0,400);
+    if(fm){F1s.push(fm.F1);F2s.push(fm.F2);if(fm.F3)F3s.push(fm.F3);}
+    if(F1s.length<400){const v=h1h2(x,st0,1024,f0c[f]);if(v!=null&&isFinite(v))hh.push(v);}
+  }
+  const q=(arr,p)=>{if(!arr.length)return null;const a2=arr.slice().sort((a,b)=>a-b);return a2[Math.min(a2.length-1,Math.floor(a2.length*p))];};
+  const f1m=F1s.length>=8?Math.round(median(F1s)):null;
+  const f2m=F2s.length>=8?Math.round(median(F2s)):null;
+  const f3m=F3s.length>=8?Math.round(median(F3s)):null;
+  const f2spread=F2s.length>=12?Math.round(q(F2s,0.9)-q(F2s,0.1)):null; /* vowel movement: mumbling collapses it */
+  const h1h2m=hh.length>=8?+median(hh).toFixed(1):null;
+  /* breaths: audible, unvoiced, high-frequency bursts inside the pauses */
+  let breaths=0;const breathAt=[];
+  gaps.forEach(g=>{
+    if(g.len<0.25)return;
+    const s0=Math.round(g.at*100),e0=Math.round((g.at+g.len)*100);
+    let run=0;
+    for(let f=s0;f<e0&&f<nF;f++){
+      const q1=dB[f]>noise+5&&dB[f]<thr+2&&!f0c[f]&&hf[f]>-6;
+      if(q1){run++;if(run===12){breaths++;breathAt.push(+((f-6)*0.01).toFixed(1));}}else run=0;
+    }
+  });
+  const breathRate=span>0?+(breaths/(span/60)).toFixed(1):null;
+  /* rhythm regularity between syllables (nPVI) */
+  let npvi=null;
+  if(sylF.length>=6){
+    const d2=[];for(let i=1;i<sylF.length;i++)d2.push((sylF[i]-sylF[i-1])*0.01);
+    const good=d2.filter(v=>v>0.05&&v<1.2);
+    if(good.length>=5){let acc=0,m2=0;
+      for(let i=1;i<good.length;i++){const a2=good[i-1],b2=good[i];acc+=Math.abs(a2-b2)/((a2+b2)/2);m2++;}
+      npvi=m2?Math.round(100*acc/m2):null;}
+  }
+  /* pitch reset: do you lift at the start of a new statement */
+  const resets=[];
+  for(let i=1;i<phrases.length;i++){
+    const prevIdx=[],curIdx=[];
+    for(let f=phrases[i-1].e;f>phrases[i-1].e-25&&f>=phrases[i-1].s;f--)if(f0c[f]>0)prevIdx.push(f0c[f]);
+    for(let f=phrases[i].s;f<phrases[i].s+25&&f<=phrases[i].e;f++)if(f0c[f]>0)curIdx.push(f0c[f]);
+    if(prevIdx.length>=4&&curIdx.length>=4)resets.push(semis(median(curIdx))-semis(median(prevIdx)));
+  }
+  const pitchReset=resets.length?+median(resets).toFixed(1):null;
+  /* active speech level, ITU P.56 style: level of the speech itself, not the silence */
+  let asum=0,acount=0;for(let f=0;f<nF;f++)if(act[f]){asum+=Math.pow(10,dB[f]/10);acount++;}
+  const activeLevel=acount?+(10*Math.log10(asum/acount)).toFixed(1):null;
+  return {f1:f1m,f2:f2m,f3:f3m,f2spread,h1h2:h1h2m,breaths,breathAt,breathRate,npvi,pitchReset,activeLevel,
+    cpps,alphaRatio,hammarberg,pauseRate,meanPause250,pauses250:allGaps.length,boundaryPauses:boundary.length,midPauses:mid.length,speechRate,longestRun,f0sd,riseSlope,fallSlope,hnr,wobble,shimmer,crisp,dynRange,rhythmCv,rushed,purposeful,pauseShare,endsLow,endsN,endsLowPct,declination,
     dur:+dur.toFixed(1),sec:+span.toFixed(1),speechSec:+phon.toFixed(1),talkRatio:+(phon/span).toFixed(2),
     pauses:pauses.length,meanPause:pauses.length?+mean(pauses.map(g=>g.len)).toFixed(2):0,longest:gaps.length?+Math.max(...gaps.map(g=>g.len)).toFixed(1):0,
     freezes:freezes.length,freezeAt:freezes.map(g=>+g.at.toFixed(1)),freezeGaps:freezes.map(g=>({at:+g.at.toFixed(2),len:+g.len.toFixed(2)})),

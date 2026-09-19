@@ -476,6 +476,13 @@ button.rec.on .dot{border-radius:7px;background:#0A0A0A;box-shadow:none;width:22
 .wcheck .wc-i{font-weight:700}
 .wcheck li.ok .wc-i{color:var(--good)} .wcheck li.no .wc-i{color:var(--bad)}
 .wc-fix{color:var(--accent);font-size:13px}
+.trxbox{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--line);margin-bottom:10px}
+.trxbox.done{border-color:var(--accent)}
+.trxbox.off{opacity:.8}
+.trxbox .trxmsg{font-size:14px}
+.trxtext{display:block;color:var(--text,#e8ecf3);font-size:14px;line-height:1.45;margin-top:2px}
+.trxview .gradebox{margin-top:6px}
+
 .gradebox{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:4px}
 .gradebox>div{background:var(--bg2,rgba(255,255,255,.03));border:1px solid var(--line);border-radius:10px;padding:8px 6px;text-align:center}
 .gradebox b{display:block;font-size:20px;color:var(--accent)}
@@ -831,8 +838,8 @@ const BASELINE={fillers:2.7,hedges:2.7,tics:7,cf:0.2,vocab:0,scores:{clarity:3,p
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="config.js?v=25"></script>
-<script src="analyzer.js?v=25"></script>
+<script src="config.js?v=26"></script>
+<script src="analyzer.js?v=26"></script>
 <script>
 /* ================= APP ================= */
 const $=(s,r=document)=>r.querySelector(s);
@@ -907,9 +914,10 @@ function recorderPanel(onDone,opts={}){
     if(st.empty){out.innerHTML=`<p class="muted">No speech detected. Mic peak ${st.peak} dB. Move closer to the mic and try again.</p>`;return;}
     try{st.url=URL.createObjectURL(VA.toWav(samples,sr));}catch(e){}
     S.touched=true;
-    if(opts.noReport){out.innerHTML=`<p class="pass">Take captured. ${st.sec}s, ${st.estWpm||"-"} wpm. Tap the button below for your numbers.</p>`;}
+    if(opts.noReport){out.innerHTML=`<p class="pass">Take captured. ${st.sec}s. Tap the button below for your numbers.</p>`;}
     else out.append(reportView(st,opts.limit,opts));
-    onDone&&onDone(st);};
+    onDone&&onDone(st);
+    if(opts.hasText&&trxOn()&&trxSupported())runTranscript(el,out,st,samples,sr);};
   $("#"+id+"-f",el).onchange=async(e)=>{const f=e.target.files&&e.target.files[0];e.target.value="";if(!f)return;out.innerHTML=`<p class="muted analyzing">Reading ${esc(f.name)}…</p>`;
     try{const {samples,sr}=await VA.decodeFile(f);await finish(samples,sr);}catch(err){out.textContent="That file couldn't be read. Try .m4a, .mp3 or .wav.";}};
   b.onclick=async()=>{
@@ -925,6 +933,23 @@ function recorderPanel(onDone,opts={}){
       out.innerHTML=`<div class="fb"><div class="eyebrow">${denied?"Microphone permission is blocked":"The microphone didn't start"}</div><p style="font-size:14px">${denied?"iPhone: Settings, Apps, Safari, Microphone, Allow. Or tap aA in the address bar, Website Settings, Microphone, Allow. PC Chrome: click the icon left of the address, set Microphone to Allow, then reload.":"Check that no other app is using the mic, then try again. "+esc(e&&e.message||"")}</p></div>`;}
   };
   return el;
+}
+async function runTranscript(el,out,st,samples,sr){
+  const box=h(`<div class="trxbox"><b class="trxmsg">Reading back what the mic recorded…</b><span class="muted trxsub">First run downloads the speech model once, then it stays on this device.</span></div>`);
+  out.prepend(box);const msg=$(".trxmsg",box),sub=$(".trxsub",box);
+  try{
+    const r=await transcribe(samples,sr,p=>{
+      if(p.phase==="download")msg.textContent=`Downloading the speech model, ${p.pct}%`;
+      else if(p.phase==="running")msg.textContent="Transcribing on this device…";});
+    st.text=r.text;st.words=r.words;st.pq=pauseQuality(r.words);st.trueWpm=trueWpm(r.words);
+    if(st.trueWpm)st.estWpm=st.trueWpm;
+    const ta=(el.closest(".stepbox")||el.closest(".rep")||document).querySelector("textarea");
+    if(ta&&!ta.value.trim()&&r.text){ta.value=r.text;ta.dispatchEvent(new Event("input",{bubbles:true}));const d=ta.closest("details");if(d)d.open=true;}
+    box.classList.add("done");
+    msg.textContent=r.text?"This is what the mic heard":"No speech found in that take";
+    sub.innerHTML=r.text?`<span class="trxtext">${esc(r.text)}</span>`:"Move closer to the mic and try again.";
+  }catch(e){box.classList.add("off");msg.textContent="On-device transcription is not available in this browser";
+    sub.textContent="Your voice numbers are unaffected. Dictate or type your words to get the wording scores.";}
 }
 function toneWord(p){return p.tone==="falling"?"falls":p.tone==="rising"?"rises":p.tone==="flat"?"flat":"too short";}
 function biggestIssue(st,limit){
@@ -1012,7 +1037,12 @@ const ADVICE={
   peak:"Mic level is off. Aim for a peak between -12 and -3 dB.",
   range:"Your pitch range is outside 6 to 10 semitones. Stress one key word per sentence.",
   dyn:"Your loudness barely changes. Lift the key word in each sentence a little.",
-  slow:"Pace is dragging. Keep energy up while still pausing between statements."
+  slow:"Pace is dragging. Keep energy up while still pausing between statements.",
+  npvi:"Your syllables fall into one flat pattern, or jump about unevenly. Natural speech alternates long and short, so let the stressed word run long and keep the small words short.",
+  breath:"Your breathing is not serving the sentence. Take one low breath at each full stop instead of stealing small ones mid sentence.",
+  reset:"You start each new statement on the note the last one died on. Lift back to your normal pitch when a new point begins.",
+  mumble:"Your vowels barely move, which is what mumbling is. Open the mouth wider on the stressed vowel in each key word.",
+  timbre:"Your tone sits outside the warm band. Breathy and light reads as unsure, pressed and tight reads as strained. Speak on a relaxed full breath with an easy onset."
 };
 function scoreQualities(st){
   const cppsBase=histBase("cpps");
@@ -1021,12 +1051,12 @@ function scoreQualities(st){
   const per10=st.sec>0?st.purposeful/st.sec*10:null;
   const D=(key,name,val,score)=>({key,name,val,score:score==null?null:Math.round(score)});
   const Q=[
-    {k:"smooth",name:"Smooth",d:[D("wobble","Pitch steadiness",st.wobble!=null?st.wobble+"% wobble":"n/a",QLB(st.wobble,1.5,4)),D("shimmer","Volume steadiness",st.shimmer!=null?st.shimmer+" dB flicker":"n/a",QLB(st.shimmer,1.5,3.5)),D("freezes","No freezes",st.freezes+"",QLB(st.freezes,0,2)),D("rhythm","Even rhythm",st.rhythmCv!=null?Math.round(st.rhythmCv*100)+"% variation":"n/a",QLB(st.rhythmCv,0.2,0.5)),D("mid","No mid-sentence stalls",st.midPauses+"",QLB(st.midPauses,1,6)),D("hes","No um/uh",st.hesitations+"",QLB(st.hesitations,0,3))]},
-    {k:"calm",name:"Calm",d:[D("pace","Pace",st.estWpm?"~"+st.estWpm+" wpm":"n/a",QBAND(st.estWpm,100,125,150,175)),D("elev","Pitch vs your usual",elev==null?"building baseline":(elev>0?"+":"")+elev+" st",QLB(elev,0.5,3)),D("art","Word speed",st.artRate+" syll/s",QLB(st.artRate,5.2,6.5)),D("purposeful","Deliberate pauses",st.purposeful+"",QHB(per10,0,1)),D("rushed","Rushed statements",st.rushed+"",QLB(st.rushed,0,2))]},
-    {k:"reassuring",name:"Reassuring",d:[D("falling","Sentences ending down",st.falling!=null?st.falling+"%":"n/a",QHB(st.falling,40,80)),D("endsLow","Endings below your normal pitch",st.endsLowPct!=null?st.endsLowPct+"%":"n/a",QHB(st.endsLowPct,40,85)),D("decl","Pitch settles through statements",st.declination!=null?(st.declination>0?"+":"")+st.declination+" st/s":"n/a",QLB(st.declination,-0.8,0.8)),D("rise","No upspeak",st.rise+"",QLB(st.rise,0,3))]},
+    {k:"smooth",name:"Smooth",d:[D("wobble","Pitch steadiness",st.wobble!=null?st.wobble+"% wobble":"n/a",QLB(st.wobble,1.5,4)),D("shimmer","Volume steadiness",st.shimmer!=null?st.shimmer+" dB flicker":"n/a",QLB(st.shimmer,1.5,3.5)),D("freezes","No freezes",st.freezes+"",QLB(st.freezes,0,2)),D("rhythm","Even rhythm",st.rhythmCv!=null?Math.round(st.rhythmCv*100)+"% variation":"n/a",QLB(st.rhythmCv,0.2,0.5)),D("mid","No mid-sentence stalls",st.midPauses+"",QLB(st.midPauses,1,6)),D("hes","No um/uh",st.hesitations+"",QLB(st.hesitations,0,3)),D("npvi","Syllable rhythm",st.npvi!=null?st.npvi+" nPVI":"n/a",QBAND(st.npvi,25,45,72,95))]},
+    {k:"calm",name:"Calm",d:[D("pace","Pace",st.estWpm?"~"+st.estWpm+" wpm":"n/a",QBAND(st.estWpm,100,125,150,175)),D("elev","Pitch vs your usual",elev==null?"building baseline":(elev>0?"+":"")+elev+" st",QLB(elev,0.5,3)),D("art","Word speed",st.artRate+" syll/s",QLB(st.artRate,5.2,6.5)),D("purposeful","Deliberate pauses",st.purposeful+"",QHB(per10,0,1)),D("rushed","Rushed statements",st.rushed+"",QLB(st.rushed,0,2)),D("breath","Breathing room",st.breathRate!=null&&st.breaths?st.breathRate+" breaths/min":(st.breaths===0?"no audible breath":"n/a"),st.breaths?QBAND(st.breathRate,3,7,20,28):(st.sec>20?35:null))]},
+    {k:"reassuring",name:"Reassuring",d:[D("falling","Sentences ending down",st.falling!=null?st.falling+"%":"n/a",QHB(st.falling,40,80)),D("endsLow","Endings below your normal pitch",st.endsLowPct!=null?st.endsLowPct+"%":"n/a",QHB(st.endsLowPct,40,85)),D("decl","Pitch settles through statements",st.declination!=null?(st.declination>0?"+":"")+st.declination+" st/s":"n/a",QLB(st.declination,-0.8,0.8)),D("rise","No upspeak",st.rise+"",QLB(st.rise,0,3)),D("reset","Lift on a new statement",st.pitchReset!=null?(st.pitchReset>0?"+":"")+st.pitchReset+" st":"n/a",QHB(st.pitchReset,0.5,2.5))]},
     {k:"confident",name:"Confident",d:[D("trail","Volume held at the end",st.trailAvg!=null?(st.trailAvg>0?"+":"")+st.trailAvg+" dB":"n/a",QHB(st.trailAvg,-5,-2)),D("levelSd","Steady volume",st.levelSd+" dB swing",QLB(st.levelSd,2.5,6)),D("hes","No um/uh",st.hesitations+"",QLB(st.hesitations,0,3)),D("rise","No upspeak",st.rise+"",QLB(st.rise,0,3)),D("longest","Longest pause",st.longest+"s",QLB(st.longest,1.2,2.5)),D("run","Longest stretch",st.longestRun+"s",QLB(st.longestRun,12,25))]},
-    {k:"clear",name:"Clear",d:[D("hnr","Voice clarity",st.hnr!=null?st.hnr+" dB":"n/a",QHB(st.hnr,5,11)),D("crisp","Consonant crispness",st.crisp!=null?st.crisp+" dB":"n/a",QHB(st.crisp,-12,-5)),D("art","Word speed",st.artRate+" syll/s",QLB(st.artRate,5.5,7)),D("cpps","Tone clarity",st.cpps!=null?st.cpps+" dB"+(cppsBase?` (base ${cppsBase})`:" (building baseline)"):"n/a",cppsBase?QHB(st.cpps,cppsBase-3,cppsBase+1):null),D("snr","Quiet background",st.snr+" dB",QHB(st.snr,12,25)),D("peak","Mic level",st.peak+" dB",QBAND(st.peak,-35,-18,-1,0.1))]},
-    {k:"engaging",name:"Engaging",d:[D("range","Pitch range",st.rangeSt!=null?st.rangeSt+" st":"n/a",QBAND(st.rangeSt,3,6,10,14)),D("dyn","Loudness contrast",st.dynRange!=null?st.dynRange+" dB":"n/a",QBAND(st.dynRange,5,10,25,35)),D("slow","Energy",st.estWpm?"~"+st.estWpm+" wpm":"n/a",QHB(st.estWpm,95,120))]}
+    {k:"clear",name:"Clear",d:[D("hnr","Voice clarity",st.hnr!=null?st.hnr+" dB":"n/a",QHB(st.hnr,5,11)),D("crisp","Consonant crispness",st.crisp!=null?st.crisp+" dB":"n/a",QHB(st.crisp,-12,-5)),D("art","Word speed",st.artRate+" syll/s",QLB(st.artRate,5.5,7)),D("cpps","Tone clarity",st.cpps!=null?st.cpps+" dB"+(cppsBase?` (base ${cppsBase})`:" (building baseline)"):"n/a",cppsBase?QHB(st.cpps,cppsBase-3,cppsBase+1):null),D("snr","Quiet background",st.snr+" dB",QHB(st.snr,12,25)),D("peak","Mic level",st.peak+" dB",QBAND(st.peak,-35,-18,-1,0.1)),D("mumble","Vowel movement",st.f2spread!=null?st.f2spread+" Hz":"n/a",QHB(st.f2spread,450,850))]},
+    {k:"engaging",name:"Engaging",d:[D("range","Pitch range",st.rangeSt!=null?st.rangeSt+" st":"n/a",QBAND(st.rangeSt,3,6,10,14)),D("dyn","Loudness contrast",st.dynRange!=null?st.dynRange+" dB":"n/a",QBAND(st.dynRange,5,10,25,35)),D("slow","Energy",st.estWpm?"~"+st.estWpm+" wpm":"n/a",QHB(st.estWpm,95,120)),D("timbre","Tone weight",st.h1h2!=null?(st.h1h2>0?"+":"")+st.h1h2+" dB":"n/a",QBAND(st.h1h2,-9,-5,4,9))]}
   ];
   Q.forEach(q=>{const s=q.d.map(x=>x.score).filter(v=>v!=null);q.score=s.length?Math.round(s.reduce((a,b)=>a+b,0)/s.length):null;});
   const all=Q.flatMap(q=>q.d.map(x=>({...x,q:q.name}))).filter(x=>x.score!=null).sort((a,b)=>a.score-b.score);
@@ -1083,6 +1113,11 @@ const DRILLS={
  peak:{t:"Set the level",s:["Hold the phone a hand's width from your mouth.","Say one sentence and check the mic peak.","Move closer or further until the peak sits between -12 and -3 dB."],p:"Mic peak between -12 and -3 dB."},
  range:{t:"One stressed word",s:["Mark one word per sentence that carries the meaning, usually a number or a verb.","Say the sentence lifting only that word.","Run 4 sentences, then the full answer."],p:"Pitch range between 6 and 10 semitones."},
  dyn:{t:"Lift the key word",s:["Say each statement flat, then again with the key word 3 dB louder.","Keep everything else the same.","Record the answer with that contrast."],p:"Loudness contrast above 10 dB."},
+ npvi:{t:"Long and short",s:["Pick one sentence with a number in it.","Say it three times, each time stretching only the number and clipping the small words around it.","Then say the whole answer keeping that long short contrast."],p:"Rhythm index between 45 and 72."},
+ breath:{t:"Breathe at the full stop",s:["Write your answer as four statements.","Take one low belly breath at each full stop, never inside a sentence.","Record it and check that the breaths land between statements."],p:"An audible breath at the full stops, none mid sentence."},
+ reset:{t:"Step back up",s:["Say a statement and let it fall on the last word.","Before the next statement, hum back up to your normal note, then start.","Run four statements that each start up and finish down."],p:"Pitch reset above 1 semitone."},
+ mumble:{t:"Open the vowel",s:["Say these with an exaggerated open mouth: I own this. Root cause. Next update.","Two fingers of space between your teeth on the stressed vowel.","Then say the whole answer at normal size, keeping the vowels open."],p:"Vowel movement above 600 Hz."},
+ timbre:{t:"Easy onset",s:["Sigh out on an h, then slide into the word: haaa I, haaa own, haaa this.","Say the sentence starting each phrase on that easy onset, no hard push and no whisper.","Record and check the tone weight number."],p:"Tone weight between -5 and +4 dB."},
  slow:{t:"Pick up the floor",s:["Cut filler phrases and adjectives, keep numbers and owners.","Say the answer aiming for 30 seconds instead of 45.","Keep the pauses, lose the drag."],p:"Pace above 120 wpm."}
 };
 function worstHistory(){try{return JSON.parse(localStorage.getItem("cv-worsthist")||"[]");}catch(e){return [];}}
@@ -1151,8 +1186,58 @@ function reportView(st,limit,opts={}){
   const fp=fixPlan(st,limit);if(fp)$(".fixslot",el).replaceWith(fp);else $(".fixslot",el).remove();
   return el;
 }
+/* ---------- on-device transcription (Whisper via a module worker) ---------- */
+const TRX={w:null,busy:false,ready:false,device:"",queue:[]};
+function trxModel(){try{return localStorage.getItem("cvc-trx-model")||"tiny";}catch(e){return "tiny";}}
+function trxOn(){try{const v=localStorage.getItem("cvc-trx");return v===null?true:v==="1";}catch(e){return true;}}
+function trxSet(on){try{localStorage.setItem("cvc-trx",on?"1":"0");}catch(e){}}
+function trxSupported(){return typeof Worker!=="undefined"&&typeof WebAssembly!=="undefined";}
+function trxWorker(){
+  if(TRX.w)return TRX.w;
+  try{TRX.w=new Worker("whisper-worker.js?v=26",{type:"module"});}catch(e){return null;}
+  TRX.w.onmessage=(ev)=>{const m=ev.data||{};
+    if(m.type==="device"){TRX.device=m.device;}
+    if(m.type==="progress"&&TRX.onProgress)TRX.onProgress(m);
+    if(m.type==="warm-done"){TRX.ready=true;if(TRX.onProgress)TRX.onProgress({pct:100,phase:"ready"});}
+    if(m.type==="result"||m.type==="error"){TRX.busy=false;const job=TRX.queue.shift();
+      if(job){m.type==="result"?job.ok(m):job.no(new Error(m.message||"transcription failed"));}}
+  };
+  TRX.w.onerror=()=>{TRX.busy=false;const job=TRX.queue.shift();if(job)job.no(new Error("worker failed"));};
+  return TRX.w;
+}
+function trxWarm(){const w=trxWorker();if(w)w.postMessage({type:"warm",model:trxModel()});}
+function transcribe(samples,sr,onProgress){
+  return new Promise((ok,no)=>{
+    const w=trxWorker();if(!w){no(new Error("no worker"));return;}
+    const audio=sr===16000?Float32Array.from(samples):VA.resample(samples,sr,16000);
+    TRX.onProgress=onProgress;TRX.busy=true;TRX.queue.push({ok,no});
+    const buf=audio instanceof Float32Array?audio:Float32Array.from(audio);
+    w.postMessage({type:"transcribe",audio:buf,model:trxModel()},[buf.buffer]);
+  });
+}
+/* what the mic actually recorded, judged on where the pauses landed */
+function pauseQuality(words){
+  if(!words||words.length<4)return null;
+  let boundary=0,mid=0,longest=0,total=0;const stalls=[];
+  for(let i=1;i<words.length;i++){
+    const gap=+(words[i].s-words[i-1].e).toFixed(2);
+    if(!isFinite(gap)||gap<0.25)continue;
+    total++;if(gap>longest)longest=gap;
+    const prev=words[i-1].w.trim();
+    const ends=/[.!?,:;]$/.test(prev);
+    if(ends)boundary++;else{mid++;if(gap>=0.6)stalls.push({at:+words[i-1].e.toFixed(1),after:prev,gap});}
+  }
+  return {boundary,mid,total,longest:+longest.toFixed(1),stalls:stalls.slice(0,5),
+    clean:total?Math.round(boundary/total*100):null};
+}
+function trueWpm(words){
+  if(!words||words.length<3)return null;
+  const span=words[words.length-1].e-words[0].s;
+  return span>1?Math.round(words.length/span*60):null;
+}
 /* ---------- live transcript (Web Speech API, where the browser has it) ---------- */
 function startSR(el,opts){
+  if(trxOn()&&trxSupported())return; /* the recording itself is transcribed after the take */
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR||!opts.hasText||S.noLiveText)return;
   const box=el.closest(".rep")||el.closest(".stepbox");const ta=box&&box.querySelector("textarea");if(!ta)return;
   try{const r=new SR();r.lang="en-US";r.continuous=true;r.interimResults=true;const base=ta.value?ta.value.trim()+" ":"";let fin="";
@@ -1309,6 +1394,63 @@ function wordCoachView(text){
     ${r.upgrades.length?`<div class="eyebrow" style="margin-top:8px">Weak words to upgrade</div><ul>${r.upgrades.map(u=>`<li class="no"><span class="wc-i">→</span><span><b>${esc(u.w)}</b>${u.c>1?` <span class="muted">×${u.c}</span>`:""}<br><span class="wc-fix">${esc(u.adv)}</span></span></li>`).join("")}</ul>`:`<p class="pass" style="margin-top:8px">No filler words or weak phrasing found in what you said.</p>`}
     ${r.bankUsed.length?`<p class="muted" style="font-size:13px;margin-top:6px">Phrase bank words used: ${r.bankUsed.map(esc).join(", ")}</p>`:""}
     <div class="aislot"></div></div>`);
+}
+const STOPW=new Set(["the","a","an","and","or","but","so","to","of","in","on","at","for","with","is","are","was","were","be","been","it","that","this","we","i","you","they","he","she","my","our","your","just","really","very","kind","sort","basically","actually","like","um","uh","well","okay","ok","yeah","going","get","got","thing","things","stuff"]);
+function isKeyWord(w){const t=String(w).toLowerCase().replace(/[^a-z0-9:']/g,"");
+  if(!t)return false;
+  if(/\d/.test(t))return true;                    /* numbers and clock times carry the meaning */
+  if(STOPW.has(t))return false;
+  return t.length>=4;}
+function emphasisMap(st){
+  if(!st.words||!st.contour||st.words.length<6)return null;
+  const dB=st.contour.dB,f0=st.contour.f0,thr=st.contour.thr;
+  const rows=[];
+  st.words.forEach(w=>{
+    if(w.s==null||w.e==null||w.e<=w.s)return;
+    const a=Math.round(w.s*100),b=Math.round(w.e*100);
+    const lv=[],pf=[];
+    for(let f=a;f<b&&f<dB.length;f++){if(dB[f]>thr){lv.push(dB[f]);if(f0[f]>0)pf.push(f0[f]);}}
+    if(lv.length<2)return;
+    const clean=String(w.w).replace(/[^\w:'%$.-]/g,"");
+    if(!clean)return;
+    rows.push({w:clean.replace(/[.,;:!?]+$/,""),s:+w.s.toFixed(2),dur:(w.e-w.s),db:Math.max.apply(null,lv),
+      f0:pf.length?pf.slice().sort((x,y)=>x-y)[Math.floor(pf.length/2)]:null,
+      syl:Math.max(1,(clean.toLowerCase().match(/[aeiouy]{1,2}/g)||[1]).length)});
+  });
+  if(rows.length<6)return null;
+  const z=(arr,v)=>{const m=arr.reduce((a,b)=>a+b,0)/arr.length;
+    const sd=Math.sqrt(arr.reduce((a,b)=>a+(b-m)*(b-m),0)/arr.length)||1;return (v-m)/sd;};
+  const dbs=rows.map(r=>r.db),durs=rows.map(r=>r.dur/r.syl),f0s=rows.filter(r=>r.f0).map(r=>r.f0);
+  rows.forEach(r=>{
+    r.p=0.45*z(dbs,r.db)+0.2*z(durs,r.dur/r.syl)+(r.f0&&f0s.length>3?0.35*z(f0s,r.f0):0);
+  });
+  const sorted=rows.slice().sort((a,b)=>b.p-a.p);
+  const seen=new Set(),top=[];
+  for(const r of sorted){const k=r.w.toLowerCase().replace(/[^a-z0-9]/g,"");if(seen.has(k))continue;seen.add(k);top.push(r);if(top.length===3)break;}
+  const keys=rows.filter(r=>isKeyWord(r.w));
+  const flatKeys=keys.filter(r=>r.p<0).sort((a,b)=>a.p-b.p).slice(0,3);
+  const wastedTop=top.filter(r=>!isKeyWord(r.w));
+  const hitRate=keys.length?Math.round(top.filter(r=>isKeyWord(r.w)).length/Math.min(3,top.length)*100):null;
+  return {top,flatKeys,wastedTop,hitRate,keyCount:keys.length};
+}
+function transcriptView(st){
+  const pq=st.pq;if(!pq&&!st.trueWpm)return null;
+  const stalls=pq&&pq.stalls.length?pq.stalls:[];
+  return h(`<div class="wcheck trxview"><div class="row" style="justify-content:space-between"><span class="eyebrow">From the recording</span><span class="mono">${st.words?st.words.length:0} words heard</span></div>
+   <div class="gradebox">
+     <div><b class="mono">${st.trueWpm??"-"}</b><span>words per minute</span></div>
+     <div><b class="mono">${pq&&pq.clean!=null?pq.clean+"%":"-"}</b><span>pauses at a full stop</span></div>
+     <div><b class="mono">${pq?pq.mid:"-"}</b><span>mid sentence stalls</span></div>
+     <div><b class="mono">${pq?pq.longest+"s":"-"}</b><span>longest pause</span></div>
+   </div>
+   <p class="muted" style="font-size:13px">${pq&&pq.clean!=null?(pq.clean>=70?"Your pauses land where sentences end. That reads as control.":"Most of your pauses landed mid sentence. That reads as searching for the word. Finish the sentence, then pause."):"Say a few more sentences for a pause read."}</p>
+   ${(()=>{const em=emphasisMap(st);if(!em)return "";
+     return `<div class="eyebrow" style="margin-top:8px">What you stressed</div>
+       <p class="muted" style="font-size:13px">Loudest, highest and longest words in the take: ${em.top.map(t=>`<b class="mono">${esc(t.w)}</b>`).join(", ")}.
+       ${em.wastedTop.length?`You spent your emphasis on ${em.wastedTop.map(t=>"“"+esc(t.w)+"”").join(" and ")}, which carries none of the meaning.`:"Your emphasis landed on words that carry the meaning."}</p>
+       ${em.flatKeys.length?`<p class="wc-fix" style="font-size:13px">Say ${em.flatKeys.map(t=>"“"+esc(t.w)+"”").join(", ")} louder, higher and slower than the words around them. That is where the room is listening.</p>`:""}`;})()}
+   ${stalls.length?`<div class="eyebrow" style="margin-top:6px">Where you stalled</div><ul>${stalls.map(x=>`<li class="no"><span class="wc-i">✗</span><span><span class="mono">${x.at}s</span> after “${esc(x.after)}” · ${x.gap.toFixed(1)}s<br><span class="wc-fix">Close your mouth and count one instead, then keep going.</span></span></li>`).join("")}</ul>`:""}
+  </div>`);
 }
 function aiFbView(fb){
   const sc=fb.scores||{};const lab={clarity:"Clarity",precision:"Precision",confidence:"Confidence",credibility:"Credibility",brevity:"Brevity",leadership:"Leadership"};
@@ -1771,7 +1913,7 @@ function stageInfo(){
   return {stage,n,avg:Math.round(avg),name:names[stage-1],how:how[stage-1],
     next:stage<4?`Stage ${stage+1} unlocks at ${[3,6,10][stage-1]} sessions and a voice score of ${[65,70,75][stage-1]}.`:"Top stage."};
 }
-const FOCUS_NAMES={falling:"End sentences down",endsLow:"End below your pitch",rise:"Kill upspeak",trail:"Hold volume to the end",pace:"Pace",art:"Word speed",purposeful:"Deliberate pauses",freezes:"No freezes",mid:"No mid-sentence stalls",hes:"No um and uh",wobble:"Steady pitch",shimmer:"Steady volume",rhythm:"Even rhythm",levelSd:"Steady volume level",longest:"Shorter pauses",run:"Break at full stops",hnr:"Voice smoothness",cpps:"Tone clarity",crisp:"Crisp consonants",snr:"Quiet room",peak:"Mic level",range:"Pitch variety",dyn:"Loudness contrast",elev:"Pitch height",decl:"Pitch settles down",rushed:"Slow the numbers",slow:"Energy"};
+const FOCUS_NAMES={falling:"End sentences down",endsLow:"End below your pitch",rise:"Kill upspeak",trail:"Hold volume to the end",pace:"Pace",art:"Word speed",purposeful:"Deliberate pauses",freezes:"No freezes",mid:"No mid-sentence stalls",hes:"No um and uh",wobble:"Steady pitch",shimmer:"Steady volume",rhythm:"Even rhythm",levelSd:"Steady volume level",longest:"Shorter pauses",run:"Break at full stops",hnr:"Voice smoothness",cpps:"Tone clarity",crisp:"Crisp consonants",snr:"Quiet room",peak:"Mic level",range:"Pitch variety",dyn:"Loudness contrast",elev:"Pitch height",decl:"Pitch settles down",rushed:"Slow the numbers",slow:"Energy",npvi:"Syllable rhythm",breath:"Breathing room",reset:"Lift on a new statement",mumble:"Vowel movement",timbre:"Tone weight"};
 function lastSessions(n){return sortedSessions().filter(s=>!s.baseline&&s.analyzer).slice(-n);}
 function todayFocus(){
   const recent=lastSessions(3).map(s=>s.analyzer&&s.analyzer.worstKey).filter(Boolean);
@@ -1847,10 +1989,10 @@ function stepView(id,state,go,total){
       :`<div class="eyebrow">${esc(p.kind.name)}${p.profile.topic?" · "+esc(p.profile.topic):""} · say it in ${p.kind.limit}s</div><h3>${esc(p.prompt)}</h3>${stg===3?`<p class="muted">Structure: ${p.kind.structure.map(esc).join(" → ")}</p>`:`<p class="muted">No structure on screen. Answer cold.</p>`}`;
     const el=h(`<div class="stepbox">${head}
       <div class="recslot"></div>
-      <details class="words"${stg<=2?"":""}><summary>Your words · tap to add</summary><textarea id="saytext" aria-label="What you said" placeholder="Fills in while you record where supported. Otherwise tap the keyboard mic and speak."></textarea></details></div>`);
+      <details class="words"${stg<=2?"":""}><summary>Your words · tap to add</summary><textarea id="saytext" aria-label="What you said" placeholder="Filled in from your recording after each take. Edit it if a word came back wrong."></textarea></details></div>`);
     const rec=recorderPanel(st=>{state.take1=st;$(".bignext",el).disabled=false;},{limit:p.kind.limit,hasText:true,big:true,noReport:true});
     $(".recslot",el).append(rec);
-    const b=nextBtn("See my numbers",()=>{state.text1=$("#saytext",el).value;go(state.step+1);});b.disabled=!state.take1;el.append(b);
+    const b=nextBtn("See my numbers",()=>{state.text1=($("#saytext",el).value||"").trim()||((state.take1&&state.take1.text)||"");go(state.step+1);});b.disabled=!state.take1;el.append(b);
     return el;
   }
   if(id==="result"){
@@ -1859,6 +2001,7 @@ function stepView(id,state,go,total){
       const worst=(state.take1.qAll||[]).filter(d=>d.score!=null).sort((a,b)=>a.score-b.score)[0];state.focusDriver=worst?worst.key:p.focus;}
     if(state.text1&&state.text1.trim()){$(".repslot",el).prepend(wordsCheckView(state.text1));
       const wc=wordCoachView(state.text1);$(".repslot",el).prepend(wc);aiCoachSlot(wc,state);}
+    if(state.take1){const tv=transcriptView(state.take1);if(tv)$(".repslot",el).prepend(tv);}
     el.append(nextBtn(total>2?"Show me the drill":"Save and finish",async(ev)=>{const bb=ev&&ev.currentTarget;if(bb)bb.disabled=true;
       await saveTake(state);
       if(total>2)go(state.step+1);
@@ -1918,6 +2061,9 @@ function saveTake(state,second){
     cf:prev.cf!=null?prev.cf:null,scores:prev.scores||null,wordsPass:prev.wordsPass!=null?prev.wordsPass:null,grade:prev.grade!=null?prev.grade:null};
   if(state.text1&&!second)s.reps=(s.reps||[]).concat([{block:"session",prompt:state.p.prompt,text:state.text1,words:a.words,f100:a.f100,h100:a.h100,tics:a.tics,ts:Date.now()}]).slice(-30);
   s.blocks=Object.assign({},s.blocks,{voice:true,bench:true});
+  if(t.pq){s.analyzer.pauseClean=t.pq.clean;s.analyzer.midStalls=t.pq.mid;s.bench.pauseClean=t.pq.clean;}
+  if(t.trueWpm)s.analyzer.wpm=t.trueWpm;
+  if(t.text)s.analyzer.transcribed=true;
   if(state.text1){const wc=wordsCheck(state.text1);s.bench.cf=!!(wc.checks[0]&&wc.checks[0].ok);s.bench.wordsPass=wc.pass;
     const rd=readability(state.text1);if(rd)s.bench.grade=rd.grade;
     s.analyzer.wordsPass=wc.pass;s.analyzer.grade=rd?rd.grade:null;}
@@ -2150,6 +2296,9 @@ function settingsCard(){
     <div id="${id}-acct"></div>
     <div><label for="${id}-k">Claude API key (turns on the AI coach, rewrites and live role-play)</label><input id="${id}-k" type="password" autocomplete="off" placeholder="sk-ant-..." value="${esc(getKey())}"></div>
     <p class="muted" style="font-size:13px">Stored only in this browser. Add it once on each device. Model: <span class="mono">${esc(getModel()||"not set")}</span></p>
+    <div><label for="${id}-trx">Transcribe my recordings on this device</label>
+      <select id="${id}-trx"><option value="off">Off, I will type my words</option><option value="tiny">On, fast model (about 45 MB, once)</option><option value="base">On, accurate model (about 85 MB, once)</option></select></div>
+    <p class="muted" style="font-size:13px">Whisper runs inside this browser. The model downloads once and is cached. Your audio is never uploaded. Status: <span class="mono" id="${id}-trxs">${esc(trxOn()?("on, "+(trxModel()==="base"?"accurate":"fast")+(TRX.device?" · "+TRX.device:"")):"off")}</span></p>
     <div><label for="${id}-tic">Words you catch yourself repeating (comma separated)</label><input id="${id}-tic" type="text" placeholder="go ahead and, at the end of the day" value="${esc(userTics().join(", "))}"></div>
     <p class="muted" style="font-size:13px">Every take counts these and the gate checks them.</p>
     <div class="row"><button type="button" id="${id}-tics">Save my words</button></div>
@@ -2172,6 +2321,13 @@ function settingsCard(){
   else acct.append(authForm());
   $("#"+id+"-ks",el).onclick=async(e)=>{const k=$("#"+id+"-k",el).value.trim();if(!k){toast("Paste your key first");return;}const b=e.currentTarget;b.disabled=true;b.textContent="Checking…";
     try{const m=await pickModel(k);localStorage.setItem("cv-api-key",k);localStorage.setItem("cv-model",m);initSample();toast("Key saved. Using "+m);renderLog($("#logbox")||undefined);}catch(err){toast(String(err.message||err));}b.disabled=false;b.textContent="Save key";};
+  const trxSel=$("#"+id+"-trx",el);if(trxSel){trxSel.value=trxOn()?trxModel():"off";
+    trxSel.onchange=()=>{const v=trxSel.value;
+      if(v==="off"){trxSet(false);toast("Transcription off. Type or dictate your words.");}
+      else{trxSet(true);try{localStorage.setItem("cvc-trx-model",v);}catch(e){}
+        TRX.w&&TRX.w.terminate&&TRX.w.terminate();TRX.w=null;TRX.ready=false;
+        toast("Transcription on. The model downloads on your next take.");}
+      $("#"+id+"-trxs",el).textContent=v==="off"?"off":"on, "+(v==="base"?"accurate":"fast");};}
   $("#"+id+"-tics",el).onclick=async()=>{const list=$("#"+id+"-tic",el).value.split(",").map(x=>x.trim().toLowerCase()).filter(Boolean).slice(0,6);
     await setProfile({tics:list});toast(list.length?"Tracking "+list.join(", "):"Tic tracking off");};
   $("#"+id+"-kc",el).onclick=()=>{try{localStorage.removeItem("cv-api-key");localStorage.removeItem("cv-model");}catch(e){}initSample();toast("Key removed");renderLog($("#logbox")||undefined);};
