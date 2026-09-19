@@ -592,6 +592,29 @@ const WORDS=[
 ];
 const TOPICS=["Conditional Access","GDAP","Intune compliance policies","Mail flow and MX records","Hybrid identity","Windows Autopilot","Data Loss Prevention","BitLocker recovery keys","Blocking legacy authentication","Continuous access evaluation","Least privilege admin roles (PIM)","Windows 365 Cloud PCs","Defender for Endpoint onboarding","Retention policies","SPF, DKIM and DMARC","Tenant-to-tenant migration"];
 const FALL_LINES=["I own this.","Mail is flowing.","Root cause is confirmed.","Next update at three.","That's the recommendation.","We are not rolling back.","I'll have it by noon.","The risk is real.","Here's what we know.","The decision is needed today."];
+const WARM_LINES={
+ pressure:["I own this.","Mail is flowing.","Root cause is confirmed.","Next update at three.","That is the recommendation.","We are not rolling back.","I will have it by noon.","Here is what we know."],
+ lead:["I own this.","That is the recommendation.","We are not changing course.","The decision is needed today.","I will have the numbers by noon.","Here is where we stand.","That is the tradeoff.","I need a yes or a no."],
+ sales:["Here is what I recommend.","That price holds.","I will send it by three.","We can start Monday.","That is the next step.","I will have an answer today.","That is included.","I want the decision this week."],
+ clinical:["Here is what is happening.","You are safe.","I will check on you in an hour.","The doctor will be here by two.","That is what we do next.","I will stay with you.","Nothing is being hidden from you.","I will explain it again."],
+ case:["Here is my answer.","I own that decision.","That is the result.","Here is the evidence.","I would do it again.","That is what I want next.","The number is correct.","That is my case."],
+ neutral:["I own this.","That is confirmed.","Next update at three.","That is my recommendation.","I will have it by noon.","The decision is needed today.","Here is what we know.","We are not changing course."]};
+function knownSubject(){const t=profile().topic;return !!t&&SUBJECTS.some(([n])=>n.toLowerCase()===t.toLowerCase());}
+function warmLines(){const pr=profile();return (!pr.topic||knownSubject())?(WARM_LINES[pr.cat]||WARM_LINES.neutral):WARM_LINES.neutral;}
+const NEUTRAL_MODELS=[
+ "Here is where we stand. / Two of the three items are done. / The last one needs one more day. / I will have it finished by Thursday at noon. / I will confirm when it is done.",
+ "Yes, that one was on me. / I made the call at nine and it was the wrong call. / I have already corrected it. / Nothing was lost. / Next update at four.",
+ "I do not have that confirmed yet. / What I know is that it started at eight fifteen. / Two people are on it now. / I will have an answer by noon. / You will hear it from me first.",
+ "Short version. / We are two weeks behind. / One approval took ten days instead of two. / I recommend we move the date to the twenty fourth. / I need that decision today.",
+ "Here is the plan for today. / First we clear the one thing that is blocking everyone else. / Then the two smaller items. / I will check in with you at three. / Anything urgent, call me."];
+const COMMIT_EX={
+ pressure:"I have isolated it to the connector certificate. Mail flows by 3:00. Next update at 3:15.",
+ lead:"We are three weeks behind. I recommend moving the launch to the 24th. I need that decision today.",
+ sales:"The price holds at the number we quoted. I can start you Monday. I will send the agreement by 3:00.",
+ clinical:"Here is what is happening and why. You are stable right now. I will check on you again at two.",
+ case:"Here is my answer in one line. I owned that decision and it worked. That is the scope I want here.",
+ neutral:"Here is where it stands. Two items are done, one needs a day. I will confirm by Thursday at noon."};
+function commitExample(){const pr=profile();return (!pr.topic||knownSubject())?(COMMIT_EX[pr.cat]||COMMIT_EX.neutral):COMMIT_EX.neutral;}
 const BUZZ=["Walk through how you set up a new laptop with Autopilot.","The last thing you automated with PowerShell and why.","What makes a good ticket note.","How you'd explain MFA to a non-technical relative.","Your ideal first week for a new engineer.","The worst outage you worked and what fixed it.","Why the service desk matters to a client's business.","What you'd change about your team's process."];
 const PASSAGES=[
  "Mail flow is restored. / Root cause was an expired connector certificate. / We renewed it at 2:10. / Queued messages are delivering now. / Next update at 3:00.",
@@ -797,8 +820,8 @@ const BASELINE={fillers:2.7,hedges:2.7,tics:7,cf:0.2,vocab:0,scores:{clarity:3,p
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="config.js?v=21"></script>
-<script src="analyzer.js?v=21"></script>
+<script src="config.js?v=22"></script>
+<script src="analyzer.js?v=22"></script>
 <script>
 /* ================= APP ================= */
 const $=(s,r=document)=>r.querySelector(s);
@@ -995,9 +1018,9 @@ function qualityView(st){
 
 /* ---------- drill library: one fix per weak driver ---------- */
 const DRILLS={
- wobble:{t:"Steady-vowel hold",s:["Breathe in low, belly out, 3 seconds.","Say \"maaaail flow is restored\" and hold the vowel in mail for 2 full seconds without letting the note bend.","Do it 5 times, then say the sentence at normal speed on the same steady note."],p:"Pitch steadiness under 2% on the next take."},
+ wobble:{t:"Steady-vowel hold",s:["Breathe in low, belly out, 3 seconds.","Say \"the plaaaan is confirmed\" and hold the vowel in plan for 2 full seconds without letting the note bend.","Do it 5 times, then say the sentence at normal speed on the same steady note."],p:"Pitch steadiness under 2% on the next take."},
  shimmer:{t:"Even airflow",s:["Hiss on an s for 10 seconds at one volume. No fading, no pumping.","Say a 4-word sentence on one breath at the same volume from first to last word.","Repeat 5 times, then record the prompt again."],p:"Volume flicker under 2 dB."},
- freezes:{t:"Three-fact skeleton",s:["Before speaking, write 3 words on paper: answer, cause, time.","Say one sentence per word, in that order, nothing else.","If you lose the next line, close your mouth and count one, then continue."],p:"Zero silences of 1.5 seconds or more."},
+ freezes:{t:"Three-fact skeleton",s:["Before speaking, write 3 words on paper: answer, reason, time.","Say one sentence per word, in that order, nothing else.","If you lose the next line, close your mouth and count one, then continue."],p:"Zero silences of 1.5 seconds or more."},
  rhythm:{t:"Metronome sentences",s:["Pick 4 short statements about the same incident.","Say each one in about 4 seconds, timing them out loud with a clock.","Redo any that land under 3 or over 6 seconds."],p:"Rhythm variation under 20%."},
  mid:{t:"Finish the sentence",s:["Say each statement with no stopping until the full stop, even if the wording is imperfect.","Pause only after the full stop, half a second.","Run 5 statements in a row this way."],p:"Zero mid-sentence stalls."},
  hes:{t:"Closed-mouth pause",s:["Speak for 60 seconds on the prompt.","Every time an um starts, shut your lips, count one, then speak.","Record twice and compare."],p:"Um and uh count of zero."},
@@ -1006,7 +1029,7 @@ const DRILLS={
  art:{t:"Full-length syllables",s:["Read the passage giving every syllable its full length, as if dictating a case number.","Say the numbers and times twice as slowly as the words around them.","Then say the whole answer at that word speed."],p:"Word speed under 5.2 syllables per second."},
  purposeful:{t:"Pause after every fact",s:["Write your answer as 4 separate statements.","After each one, close your mouth and count one before the next.","Record it and check the pause count."],p:"At least one deliberate pause every 10 seconds."},
  rushed:{t:"Slow the numbers",s:["Mark every number and time in your answer.","Say the sentence around each one at half your normal speed.","Keep the rest of the answer at normal pace."],p:"Zero rushed statements."},
- falling:{t:"Falling-tone ladder",s:["Say these 5 lines, dropping pitch on the final word like setting down a cup: I own this. Mail is flowing. Root cause is confirmed. Next update at three. That is the recommendation.","Record and check which ones still rise.","Redo the ones that rose, then say the full answer."],p:"70% or more of statements ending down."},
+ falling:{t:"Falling-tone ladder",s:["Say these 5 lines, dropping pitch on the final word like setting down a cup: I own this. That is confirmed. Next update at three. That is the recommendation. The decision is needed today.","Record and check which ones still rise.","Redo the ones that rose, then say the full answer."],p:"70% or more of statements ending down."},
  endsLow:{t:"Land under your line",s:["Hum your normal speaking note and remember it.","Say each statement so the last word sits below that note.","Do 5 statements, then the full answer."],p:"75% of endings below your normal pitch."},
  decl:{t:"Start mid, end low",s:["Start each sentence slightly above your normal note.","Let the pitch walk down through the sentence, lowest on the last word.","Run 4 sentences, then the full answer."],p:"Pitch drift negative on most statements."},
  rise:{t:"Kill the upspeak",s:["Say each statement, then add the silent thought \"that is a fact, not a question\".","If it rose, repeat the same sentence with the last word lower.","Do 5 in a row clean."],p:"Zero rising statements."},
@@ -1016,7 +1039,7 @@ const DRILLS={
  run:{t:"Break at the full stop",s:["Cut your answer into statements of 10 words or fewer.","Breathe at every full stop.","Record and check the longest unbroken run."],p:"Longest run under 12 seconds."},
  hnr:{t:"Warm-up and support",s:["Hum on an m for 20 seconds, lips buzzing, then slide down.","Drink water. Speak on the first half of the breath, not the end of it.","Record the answer again."],p:"Voice clarity back to your baseline."},
  cpps:{t:"Breath reset for tone",s:["Two slow belly breaths, exhale twice as long as the inhale.","Hum for 20 seconds, then say 3 sentences on that resonance.","Record again and compare the CPPS number."],p:"Tone clarity within 1 dB of your baseline."},
- crisp:{t:"Finish the consonants",s:["Say: Root cause. Next update. Confirmed. Restored. Hit the final t and d hard.","Repeat the list twice at speaking pace.","Then say the full answer keeping those endings."],p:"Crispness above -7 dB."},
+ crisp:{t:"Finish the consonants",s:["Say: Confirmed. Completed. Next update. Decided. Hit the final t and d hard.","Repeat the list twice at speaking pace.","Then say the full answer keeping those endings."],p:"Crispness above -7 dB."},
  snr:{t:"Quiet the room",s:["Close the door, turn off the fan or TV, move away from the laptop fan.","Get within a hand's width of the mic.","Record 10 seconds of silence first to check the noise floor."],p:"Background 20 dB below your voice."},
  peak:{t:"Set the level",s:["Hold the phone a hand's width from your mouth.","Say one sentence and check the mic peak.","Move closer or further until the peak sits between -12 and -3 dB."],p:"Mic peak between -12 and -3 dB."},
  range:{t:"One stressed word",s:["Mark one word per sentence that carries the meaning, usually a number or a verb.","Say the sentence lifting only that word.","Run 4 sentences, then the full answer."],p:"Pitch range between 6 and 10 semitones."},
@@ -1434,7 +1457,7 @@ async function generateThemePrompts(topic){
   if(!S.sample)return null;
   const cat=CATS[profile().cat];const ref=subjectRef(topic);
   const who=ref.mode==="role"?`someone who works as ${ref.p}`:ref.mode==="event"?`someone preparing for ${ref.p}`:`someone working on ${topic}`;
-  const ask=`Write speaking-practice prompts for ${who}, who practises ${cat.name} (${cat.sub}) and speaks to ${AUDIENCES[profile().audience]}.
+  const ask=`Write speaking-practice prompts for ${who}, who practices ${cat.name} (${cat.sub}) and speaks to ${AUDIENCES[profile().audience]}.
 Return JSON only: {"scripts":["..","..",".."],"answer":["..","..",".."],"status":["..","..",".."],"hold":["..","..",".."],"exec":["..","..",".."]}
 scripts: three model answers from ${who}, written the way a confident speaker would say them out loud, 4 short sentences each, separated by " / " between sentences, with a number or a time in each.
 answer: a hard question someone asks them. status: a situation where they give a short update on their work. hold: someone pushes back on their position. exec: they brief a decision maker.
@@ -1444,7 +1467,7 @@ Each prompt is one or two sentences, concrete, with a named situation and a numb
 }
 function profileCard(onDone){
   const pr=profile();const id=uid();
-  const el=h(`<div class="card setup"><h2>What do you want to practise?</h2>
+  const el=h(`<div class="card setup"><h2>What do you want to practice?</h2>
     <p class="muted" style="font-size:14px">Type your own theme, or pick a ready-made area below.</p>
     <div><label for="${id}-t2">Search your role or subject</label>
       <input id="${id}-t2" type="text" autocomplete="off" placeholder="nurse, sales, acting, interview, Intune rollout" value="${esc(pr.topic)}">
@@ -1501,8 +1524,8 @@ const MODELS={
   "Situation: room 412, Mr. Alvarez, blood pressure 82 over 50. / Background: post-op day two, on antibiotics since Tuesday. / Assessment: I think he is septic. / Recommendation: I need you at the bedside now and orders for fluids.",
   "I want to make sure you were heard. / Last night the team checked him every two hours and his oxygen stayed stable. / I will sit with you now and go through the chart. / I will update you again before my shift ends at 7:00."],
  case:[
-  "The situation was a failed migration two hours before a client cutover. / My task was to get 200 mailboxes live by 6 AM. / I isolated the failure to a throttling policy, changed it, and restarted the batch. / Result: all 200 finished by 5:40 and the client never saw the delay.",
-  "I am a senior engineer who runs escalations. / I own the Microsoft 365 estate for 40 client tenants. / Last year I cut our repeat incidents by a third. / I am looking for the architect seat next.",
+  "The situation was a deadline that moved up by two weeks. / My task was to deliver the same work with the same people. / I cut the scope to the three items that actually mattered and moved two people onto them. / Result: we finished on the new date and nothing slipped after it.",
+  "I am the person they hand the messy problems to. / I own the work end to end, from the first call to the follow up. / Last year I cut repeat problems by about a third. / I am looking for the next seat up.",
   "This case is about a promise that was not kept. / I will show you the contract, the delivery dates, and three emails. / When you have seen them you will find for my client. / I am asking for the full amount."]
 };
 function stageInfo(){
@@ -1530,7 +1553,7 @@ function sessionPlan(){
   const lv=L(),di=dayIndex();
   const kind=kindByIndex(di,lv.n);const stg=stageInfo();const pr=profile();
   const themeScripts=(pr.themePrompts||{}).scripts;
-  const script=pr.topic&&themeScripts&&themeScripts.length?pick(themeScripts,di):pick(MODELS[pr.cat]||MODELS.pressure,di);
+  const script=pr.topic&&themeScripts&&themeScripts.length?pick(themeScripts,di):(pr.topic&&!knownSubject())?pick(NEUTRAL_MODELS,di):pick(MODELS[pr.cat]||MODELS.pressure,di);
   const scriptIsTheme=!!(pr.topic&&themeScripts&&themeScripts.length);
   return {lv,di,kind,prompt:promptFor(kind,di),script,scriptIsTheme,stage:stg,focus:todayFocus(),profile:pr};
 }
@@ -1546,7 +1569,7 @@ function renderHome(){
       <h2>${done?"Session done today":esc(p.kind.name)}</h2>
       <p class="goal">Stage ${p.stage.stage} of 4: ${esc(p.stage.name)}. ${esc(p.stage.how)}</p>
       <p class="goal" style="font-size:13px">Focus: ${esc(FOCUS_NAMES[p.focus]||p.focus)} · about 12 minutes · ${esc(p.stage.next)}</p>
-      <p class="goal" style="font-size:13px">${p.profile.topic?"Theme: "+esc(p.profile.topic)+" · ":""}${esc(CATS[p.profile.cat].name)} · for ${esc(p.profile.audience)}</p>
+      <p class="goal" style="font-size:13px">${p.profile.topic?"Theme: "+esc(p.profile.topic):esc(CATS[p.profile.cat].name)} · for ${esc(p.profile.audience)} <button type="button" class="linkbtn" id="chgtheme">Change</button></p>
     </div>
     <div class="homestats">
       <div class="stat"><b>${st}</b><span>day streak</span></div>
@@ -1556,11 +1579,12 @@ function renderHome(){
     <button class="primary bigstart" id="startbtn" type="button">${done?"Run another session":"Start session"}</button>
     ${s&&s.commit?`<div class="commitcard"><div class="eyebrow">Your line for today's calls</div><p>${esc(s.commit)}</p></div>`:""}
     <button type="button" class="linkbtn" id="quickrec">Just record and analyze something</button>
-    <button type="button" class="linkbtn" id="editprof">Change area, audience or topic</button>
+    <button type="button" class="linkbtn" id="editprof">Change my theme or area</button>
   </div>`));
   $("#startbtn",v).onclick=()=>startSession(p);
   $("#quickrec",v).onclick=()=>startSession(p,true);
-  $("#editprof",v).onclick=()=>{v.innerHTML="";v.append(profileCard());};
+  const openProf=()=>{v.innerHTML="";v.append(profileCard());window.scrollTo({top:0,behavior:"smooth"});};
+  $("#editprof",v).onclick=openProf;const ct=$("#chgtheme",v);if(ct)ct.onclick=openProf;
 }
 /* --- the player --- */
 function startSession(p,quickOnly){
@@ -1579,7 +1603,7 @@ function nextBtn(label,fn){const b=h(`<button class="primary bignext" type="butt
 function stepView(id,state,go,total){
   const p=state.p,lv=p.lv;
   if(id==="warm"){
-    const lines=[0,1,2].map(k=>pick(FALL_LINES,p.di*3+k));
+    const WL=warmLines();const lines=[0,1,2].map(k=>pick(WL,p.di*3+k));
     const el=h(`<div class="stepbox"><div class="eyebrow">Warm up · 60 seconds</div><h3>Breathe, then say these out loud</h3>
       <p class="say">In for 4. Hold 4. Out for 6. Twice.</p>
       <ul class="saylist">${lines.map(l=>`<li>${esc(l)}</li>`).join("")}</ul>
@@ -1589,7 +1613,7 @@ function stepView(id,state,go,total){
   if(id==="say"){
     const stg=p.stage.stage;
     const keywords=(p.script.split(" / ").map(s=>s.trim().split(/\s+/).slice(0,2).join(" ")).slice(0,4));
-    const head=stg===1?`<div class="eyebrow">Stage 1 · read it out loud in ${p.kind.limit}s</div><h3 class="say">${esc(p.script).replace(/ \/ /g,' <span class="slash">/</span> ')}</h3><p class="muted">Every slash is a full stop. Drop your pitch on the last word of each part.${p.profile.topic&&!p.scriptIsTheme?" This script is from your area. Add a Claude API key in More to get scripts about "+esc(p.profile.topic)+".":""}</p>`
+    const head=stg===1?`<div class="eyebrow">Stage 1 · read it out loud in ${p.kind.limit}s</div><h3 class="say">${esc(p.script).replace(/ \/ /g,' <span class="slash">/</span> ')}</h3><p class="muted">Every slash is a full stop. Drop your pitch on the last word of each part.${p.profile.topic&&!p.scriptIsTheme?" Neutral script. Add a Claude API key in More and every script will be about "+esc(p.profile.topic)+".":""}</p>`
       :stg===2?`<div class="eyebrow">Stage 2 · read once, then say it from the keywords</div><h3 class="say">${esc(p.script).replace(/ \/ /g,' <span class="slash">/</span> ')}</h3><p class="muted">Now cover the script. Keywords: ${keywords.map(esc).join(" · ")}</p>`
       :`<div class="eyebrow">${esc(p.kind.name)}${p.profile.topic?" · "+esc(p.profile.topic):""} · say it in ${p.kind.limit}s</div><h3>${esc(p.prompt)}</h3>${stg===3?`<p class="muted">Structure: ${p.kind.structure.map(esc).join(" → ")}</p>`:`<p class="muted">No structure on screen. Answer cold.</p>`}`;
     const el=h(`<div class="stepbox">${head}
@@ -1640,7 +1664,7 @@ function stepView(id,state,go,total){
   }
   if(id==="commit"){
     const el=h(`<div class="stepbox"><div class="eyebrow">Carry it to a real call</div><h3>Write the one line you will use today</h3>
-      <p class="muted">Example: I have isolated it to the connector certificate. Mail flows by 3:00. Next update at 3:15.</p>
+      <p class="muted">Example: ${esc(commitExample())}</p>
       <textarea id="commitline" aria-label="Your line" placeholder="Type or dictate the line"></textarea></div>`);
     el.append(nextBtn("Finish session",async()=>{const s=sess();s.commit=$("#commitline",el).value.trim();s.sessionDone=true;s.level=S.prog.level||1;await saveSession();
       try{navigator.vibrate&&navigator.vibrate([20,40,20]);}catch(e){}
