@@ -820,8 +820,8 @@ const BASELINE={fillers:2.7,hedges:2.7,tics:7,cf:0.2,vocab:0,scores:{clarity:3,p
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="config.js?v=22"></script>
-<script src="analyzer.js?v=22"></script>
+<script src="config.js?v=23"></script>
+<script src="analyzer.js?v=23"></script>
 <script>
 /* ================= APP ================= */
 const $=(s,r=document)=>r.querySelector(s);
@@ -1470,32 +1470,37 @@ function profileCard(onDone){
   const el=h(`<div class="card setup"><h2>What do you want to practice?</h2>
     <p class="muted" style="font-size:14px">Type your own theme, or pick a ready-made area below.</p>
     <div><label for="${id}-t2">Search your role or subject</label>
-      <input id="${id}-t2" type="text" autocomplete="off" placeholder="nurse, sales, acting, interview, Intune rollout" value="${esc(pr.topic)}">
+      <input id="${id}-t2" type="text" autocomplete="off" placeholder="nurse, sales, acting, interview, Intune rollout" value="">
       <div id="${id}-sg" class="suggest" hidden></div>
       <div id="${id}-pop" class="chips pop"></div>
+      <div id="${id}-cur" class="themecard"${pr.topic?"":" hidden"}></div>
       <div id="${id}-th" class="themecard" hidden></div></div>
     <details class="guide" id="${id}-adv"><summary>Or pick a ready-made area</summary>
     <div class="catlist" id="${id}-c">${Object.entries(CATS).map(([k,v])=>`<button type="button" data-k="${k}" class="catbtn ${pr.cat===k?"on":""}"><b>${esc(v.name)}</b><span>${esc(v.sub)}</span></button>`).join("")}</div></details>
     <div><label>Who you speak to most</label><div class="chips" id="${id}-a">${Object.keys(AUDIENCES).map(k=>`<button type="button" data-k="${k}" class="chip ${pr.audience===k?"on":""}">${esc(k[0].toUpperCase()+k.slice(1))}</button>`).join("")}</div></div>
     <button class="primary bigstart" type="button" id="${id}-s">Save and start</button></div>`);
   el.querySelectorAll(".catlist,.chips").forEach(box=>box.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;[...box.children].forEach(c=>c.classList.remove("on"));b.classList.add("on");}));
-  const ti=$("#"+id+"-t2",el),tc=$("#"+id+"-th",el),cl=$("#"+id+"-c",el),adv=$("#"+id+"-adv",el),sg=$("#"+id+"-sg",el),pop=$("#"+id+"-pop",el);
+  const ti=$("#"+id+"-t2",el),tc=$("#"+id+"-th",el),cl=$("#"+id+"-c",el),adv=$("#"+id+"-adv",el),sg=$("#"+id+"-sg",el),pop=$("#"+id+"-pop",el),cur=$("#"+id+"-cur",el);
+  let keep=pr.topic;
+  const paintCur=()=>{cur.hidden=!keep||!!ti.value.trim();
+    if(!cur.hidden)cur.innerHTML=`<div class="themeon"><b>Current theme: ${esc(keep)}</b><span>Type above to change it, or keep it and just press save.</span><button type="button" class="linkbtn" data-clear="1">Clear theme</button></div>`;};
+  cur.addEventListener("click",e=>{if(!e.target.closest("[data-clear]"))return;keep="";ti.value="";paint();toast("Theme cleared");});
   const POP=["Microsoft 365 engineer","Job interview","Sales representative","Nurse","Team lead","Acting"];
   pop.innerHTML=POP.map(n=>`<button type="button" class="chip" data-n="${esc(n)}">${esc(n)}</button>`).join("");
   pop.addEventListener("click",e=>{const b=e.target.closest(".chip");if(!b)return;ti.value=b.dataset.n;paint();});
   const paintSuggest=()=>{const hits=searchSubjects(ti.value);const exact=SUBJECTS.some(([n])=>n.toLowerCase()===ti.value.trim().toLowerCase());
     sg.hidden=!hits.length||exact;if(!sg.hidden)sg.innerHTML=hits.map(([n,a])=>`<button type="button" data-n="${esc(n)}"><b>${esc(n)}</b><span>${esc(CATS[a].name)}</span></button>`).join("");};
   sg.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;ti.value=b.dataset.n;sg.hidden=true;paint();});
-  const paint=()=>{const v=ti.value.trim();paintSuggest();pop.hidden=!!v;
+  const paint=()=>{const v=ti.value.trim();paintSuggest();pop.hidden=!!v;paintCur();
     const picking=!sg.hidden;tc.hidden=!v||picking;if(v)adv.open=false;
     if(v&&!picking){const area=CATS[areaForSubject(v)];
       [...cl.children].forEach(c=>c.classList.remove("on"));adv.open=false;
       const rf=subjectRef(v);const whoTxt=rf.mode==="role"?"written for "+rf.p:rf.mode==="event"?"built around "+rf.p:"about "+v;
       tc.innerHTML=`<div class="themeon"><b>Theme: ${esc(v)}</b><span>Every prompt is ${esc(whoTxt)}. Coaching structure: ${esc(area.name)}.</span><button type="button" class="linkbtn" id="${id}-clear">Clear theme</button></div>`;
-      const c=$("#"+id+"-clear",tc);if(c)c.onclick=()=>{ti.value="";paint();};}
-    else if(!v){const cur=profile().cat;[...cl.children].forEach(c=>c.classList.toggle("on",c.dataset.k===cur));adv.open=true;}};
+      const c=$("#"+id+"-clear",tc);if(c)c.onclick=()=>{ti.value="";keep="";paint();};}
+    else if(!v){const ac=keep?areaForSubject(keep):profile().cat;[...cl.children].forEach(c=>c.classList.toggle("on",c.dataset.k===ac));adv.open=!keep;}};
   ti.addEventListener("input",paint);paint();
-  $("#"+id+"-s",el).onclick=async(e)=>{const c=$("#"+id+"-c .on",el),a=$("#"+id+"-a .on",el);const topic=$("#"+id+"-t2",el).value.trim();
+  $("#"+id+"-s",el).onclick=async(e)=>{const c=$("#"+id+"-c .on",el),a=$("#"+id+"-a .on",el);const typed=$("#"+id+"-t2",el).value.trim();const topic=typed||keep;
     const b=e.currentTarget;b.disabled=true;
     const changed=topic&&topic!==pr.topic;
     await setProfile({cat:topic?areaForSubject(topic):(c?c.dataset.k:"pressure"),audience:a?a.dataset.k:"client",topic,set:true,themePrompts:changed?null:(S.prog.profile||{}).themePrompts});
