@@ -1,7 +1,7 @@
 {
-  "name": "ClownVoiceCommand",
-  "short_name": "ClownVoice",
-  "description": "Speaking training with synced progress.",
+  "name": "ClownVoiceAI",
+  "short_name": "ClownVoiceAI",
+  "description": "AI speaking coach: record, get scored on voice and words, drill the weakest part.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
