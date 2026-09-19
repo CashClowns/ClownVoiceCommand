@@ -520,6 +520,14 @@ button.rec.on .dot{border-radius:7px;background:#0A0A0A;box-shadow:none;width:22
 .themeon b{font-size:16px}
 .themeon span{font-size:13px;color:#3a3000}
 .themeon .linkbtn{color:#3a3000;align-self:flex-start;padding:0;min-height:32px}
+
+.suggest{display:flex;flex-direction:column;gap:4px;margin-top:6px;background:var(--sunk);border:1px solid var(--line);border-radius:10px;padding:6px;max-height:260px;overflow:auto}
+.suggest button{display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:46px;text-align:left;background:transparent;border:none;box-shadow:none;padding:8px 10px;border-radius:8px}
+.suggest button:hover,.suggest button:focus-visible{background:var(--steel)}
+.suggest b{font-size:15px;font-weight:600}
+.suggest span{font-size:12px;color:var(--muted)}
+.pop{margin-top:8px}
+.pop .chip{font-size:13px;min-height:38px;padding:6px 12px}
 </style>
 <style>:root{padding-top:env(safe-area-inset-top,0px)} html,body{margin:0} img{max-width:100%}</style>
 </head>
@@ -789,8 +797,8 @@ const BASELINE={fillers:2.7,hedges:2.7,tics:7,cf:0.2,vocab:0,scores:{clarity:3,p
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="config.js?v=18"></script>
-<script src="analyzer.js?v=18"></script>
+<script src="config.js?v=21"></script>
+<script src="analyzer.js?v=21"></script>
 <script>
 /* ================= APP ================= */
 const $=(s,r=document)=>r.querySelector(s);
@@ -1331,10 +1339,87 @@ const CATS={
 const AUDIENCES={engineer:"an engineer who wants the mechanism",manager:"a manager who wants impact and dates",exec:"an executive who wants the conclusion and the decision",client:"a client or patient who wants reassurance and a time"};
 const TOPIC_NOTE=t=>` Context: ${t}.`;
 const THEME_TEMPLATES={
- answer:(t,k)=>`Someone asks you a hard question about ${t}. Answer it in ${k.limit} seconds, answer first, then one piece of evidence, then the next step.`,
- status:(t,k)=>`Give a ${k.limit}-second update on ${t}: where it stands, what it affects, what you are doing, and when you will report again.`,
- hold:(t,k)=>`Someone pushes back hard on your position about ${t}. Hold it without getting defensive: acknowledge, one fact, the alternative, ask for the decision.`,
- exec:(t,k)=>`Brief a decision maker on ${t} in ${k.limit} seconds: conclusion, impact, recommendation, decision needed.`};
+ answer:[(t,k)=>`Someone who knows nothing about ${t} asks you to explain it in ${k.limit} seconds. Answer first, one example, then why it matters.`,
+   (t,k)=>`A skeptic asks: "Why should anyone care about ${t}?" Answer in ${k.limit} seconds without defending.`,
+   (t,k)=>`Someone asks what the hardest part of ${t} is and how you handle it. Answer first, then one concrete example.`,
+   (t,k)=>`A newcomer asks how to get started with ${t}. Give them the first three steps in ${k.limit} seconds.`],
+ status:[(t,k)=>`Give a ${k.limit}-second update on ${t}: where it stands, what it affects, what you are doing, and when you report again.`,
+   (t,k)=>`Someone asks how ${t} is going this week. Give the state, one number, the next step and a time.`,
+   (t,k)=>`Update a group on ${t} after a setback. What happened, what it costs, what happens next, and when.`,
+   (t,k)=>`Summarize the last month of ${t} in ${k.limit} seconds, ending with the next milestone and its date.`],
+ hold:[(t,k)=>`Someone says your approach to ${t} is wrong. Hold your position: acknowledge, one fact, the alternative, ask for the decision.`,
+   (t,k)=>`Someone dismisses ${t} as a waste of time. Respond without getting defensive.`,
+   (t,k)=>`A person with more authority tells you to change your plan for ${t}. Push back with one fact and an alternative.`,
+   (t,k)=>`Someone blames you for a problem with ${t} that was not yours. Separate cause from fix.`],
+ exec:[(t,k)=>`Brief a decision maker on ${t} in ${k.limit} seconds: conclusion, impact, recommendation, decision needed.`,
+   (t,k)=>`Ask for time, money or people for ${t}. State the ask, the payoff, and the decision you need.`,
+   (t,k)=>`Make the case for a change to ${t} in ${k.limit} seconds, with one tradeoff named out loud.`,
+   (t,k)=>`Present two options for ${t} and the one you recommend, then ask for the call.`]};
+
+const SUBJECTS=[
+ ["Microsoft 365 engineer","pressure"],["Help desk technician","pressure"],["Network engineer","pressure"],["Cloud architect","pressure"],["DevOps engineer","pressure"],["Security analyst","pressure"],["Incident commander","pressure"],["Site reliability engineer","pressure"],["IT manager","pressure"],["Field technician","pressure"],["Data center operations","pressure"],["QA engineer","pressure"],["Support team lead","pressure"],["Systems administrator","pressure"],["Air traffic or dispatch","pressure"],["Pilot briefing","pressure"],["Military briefing","pressure"],["Police officer","pressure"],["Firefighter","pressure"],["Paramedic or EMT","pressure"],
+ ["Team lead","lead"],["Engineering manager","lead"],["Project manager","lead"],["Product manager","lead"],["Scrum master","lead"],["Director","lead"],["CTO","lead"],["CEO or founder","lead"],["Operations manager","lead"],["HR manager","lead"],["Finance manager","lead"],["Board presentation","lead"],["All-hands update","lead"],["Performance review","lead"],["Investor pitch","lead"],["Startup founder","lead"],["Nonprofit director","lead"],["Retail manager","lead"],["Restaurant manager","lead"],["Construction foreman","lead"],
+ ["Sales representative","sales"],["Account executive","sales"],["Sales development rep","sales"],["Customer success manager","sales"],["Account manager","sales"],["Real estate agent","sales"],["Insurance agent","sales"],["Financial advisor","sales"],["Mortgage broker","sales"],["Car sales","sales"],["Recruiter","sales"],["Consultant","sales"],["Marketing manager","sales"],["Agency client lead","sales"],["Retail associate","sales"],["Call center agent","sales"],["Customer support","sales"],["Procurement or vendor calls","sales"],["Freelancer client calls","sales"],["Contract negotiation","sales"],
+ ["Nurse","clinical"],["Physician","clinical"],["Physician assistant","clinical"],["Nurse practitioner","clinical"],["Pharmacist","clinical"],["Dentist","clinical"],["Physical therapist","clinical"],["Mental health therapist","clinical"],["Social worker","clinical"],["Medical assistant","clinical"],["Veterinarian","clinical"],["Caregiver","clinical"],["Clinical handoff","clinical"],["Patient education","clinical"],["Breaking difficult news","clinical"],["Home health visit","clinical"],
+ ["Job interview","case"],["Salary negotiation","case"],["Lawyer","case"],["Paralegal","case"],["Trial advocacy","case"],["Mediation","case"],["Teacher","case"],["Professor","case"],["Corporate trainer","case"],["Sports coach","case"],["Pastor or speaker","case"],["Podcaster","case"],["YouTuber or creator","case"],["Acting","case"],["Voice acting","case"],["Stand-up comedy","case"],["Wedding or best man speech","case"],["TED-style talk","case"],["Conference talk","case"],["Thesis defense","case"],["Student presentation","case"],["Parent-teacher conference","case"],["Debate","case"],["Journalist or PR spokesperson","case"],["Musician or performer","case"],["Personal trainer","case"],["Yoga or fitness instructor","case"],["Chef or hospitality","case"],["Flight attendant","case"],["Scientist or research talk","case"]
+];
+function searchSubjects(q){const s=String(q).toLowerCase().trim();if(!s)return [];return SUBJECTS.filter(([n])=>n.toLowerCase().includes(s)).slice(0,8);}
+function areaForSubject(name){const hit=SUBJECTS.find(([n])=>n.toLowerCase()===String(name).toLowerCase());return hit?hit[1]:areaForTheme(name);}
+/* how a subject reads inside a sentence */
+const EVENT_PHRASE={"Pilot briefing":"your pre-flight briefing","Military briefing":"your briefing","Board presentation":"your board presentation","All-hands update":"your all-hands update","Performance review":"the performance review you are giving","Investor pitch":"your investor pitch","Contract negotiation":"this contract negotiation","Procurement or vendor calls":"your call with the vendor","Freelancer client calls":"your call with the client","Clinical handoff":"your handoff to the next shift","Patient education":"the explanation you are giving your patient","Breaking difficult news":"the conversation you are about to have with the family","Home health visit":"your home visit","Job interview":"your job interview","Salary negotiation":"your salary conversation","Trial advocacy":"your argument in court","Mediation":"this mediation","Wedding or best man speech":"your wedding speech","TED-style talk":"your talk","Conference talk":"your conference talk","Thesis defense":"your thesis defense","Student presentation":"your presentation","Parent-teacher conference":"this parent-teacher conference","Debate":"this debate","Scientist or research talk":"your research talk"};
+const ROLE_PHRASE={"CEO or founder":"a founder","Air traffic or dispatch":"a dispatcher","Paramedic or EMT":"a paramedic","Data center operations":"a data center operations engineer","Car sales":"a car salesperson","Customer support":"a support agent","Journalist or PR spokesperson":"a spokesperson","Musician or performer":"a performer","Chef or hospitality":"a chef","Yoga or fitness instructor":"a fitness instructor","Pastor or speaker":"a pastor","YouTuber or creator":"a creator","Sports coach":"a coach","Stand-up comedy":"a stand-up comedian","Acting":"an actor","Voice acting":"a voice actor","IT manager":"an IT manager","HR manager":"an HR manager","Help desk technician":"a help desk technician","Microsoft 365 engineer":"a Microsoft 365 engineer","CTO":"a CTO","SDR":"a sales development rep"};
+function art(n){const s=String(n).trim();return (/^[aeiou]/i.test(s)?"an ":"a ")+(/[A-Z]{2,}/.test(s)?s:s.toLowerCase());}
+function subjectRef(topic){const t=String(topic||"").trim();if(!t)return {mode:"topic",p:t};
+  const hit=SUBJECTS.find(([n])=>n.toLowerCase()===t.toLowerCase());
+  if(hit){const n=hit[0];if(EVENT_PHRASE[n])return {mode:"event",p:EVENT_PHRASE[n]};return {mode:"role",p:ROLE_PHRASE[n]||art(n)};}
+  if(/\b(rollout|migration|launch|project|renewal|deployment|upgrade|incident|outage|initiative|program|plan|release|audit|quarter|q[1-4])\b/i.test(t))return {mode:"topic",p:t};
+  if(/\b(interview|pitch|talk|speech|presentation|defense|defence|negotiation|meeting|demo|keynote|briefing|stand-up)\b/i.test(t)){
+    const p=/^(my|your|the|this)\b/i.test(t)?t.replace(/^my\b/i,"your"):"your "+t.toLowerCase();return {mode:"event",p};}
+  if(t.split(/\s+/).length<=3)return {mode:"role",p:ROLE_PHRASE[t]||art(t)};
+  return {mode:"topic",p:t};}
+const ROLE_TEMPLATES={
+ answer:[(r,k)=>`Someone outside your field asks what the hardest part of being ${r} is. Answer in ${k.limit} seconds: answer first, one example, then why it matters.`,
+   (r,k)=>`A new hire asks the question you get most often as ${r}. Answer it in plain words in ${k.limit} seconds.`,
+   (r,k)=>`Someone asks why the work you do as ${r} matters to the business. Answer first, then one piece of evidence.`,
+   (r,k)=>`A skeptic questions a call you made today as ${r}. Answer in ${k.limit} seconds without defending.`],
+ status:[(r,k)=>`Give a ${k.limit}-second update on your week as ${r}: where things stand, one number, what you do next, and when you report again.`,
+   (r,k)=>`Something went wrong on your watch as ${r}. Update the room: what happened, what it affects, what you are doing, next update time.`,
+   (r,k)=>`Hand your work as ${r} to the person covering for you. ${k.limit} seconds, nothing dropped.`,
+   (r,k)=>`Report on the last month as ${r} in ${k.limit} seconds, ending with the next milestone and its date.`],
+ hold:[(r,k)=>`Someone senior tells you to do it their way, and you know it is wrong for the people you serve as ${r}. Acknowledge, one fact, the alternative, ask for the decision.`,
+   (r,k)=>`You are blamed for a problem that was not yours as ${r}. Separate cause from fix without getting defensive.`,
+   (r,k)=>`Someone dismisses the work you do as ${r} as unnecessary. Respond in ${k.limit} seconds, no heat.`,
+   (r,k)=>`You are pushed for a commitment you cannot make as ${r}. Hold the line and give a time you can commit to.`],
+ exec:[(r,k)=>`Brief a decision maker on what you need to do your job as ${r}: conclusion, impact, recommendation, decision needed. ${k.limit} seconds.`,
+   (r,k)=>`Ask for time, money or people for your team as ${r}. State the ask, the payoff, and the decision you need.`,
+   (r,k)=>`Recommend a change to how the work gets done as ${r}, with one tradeoff named out loud.`,
+   (r,k)=>`Present two options to a decision maker as ${r} and the one you recommend, then ask for the call.`]};
+const EVENT_TEMPLATES={
+ answer:[(e,k)=>`You are in ${e}. Answer the hardest question you expect, in ${k.limit} seconds. Answer first, then the evidence.`,
+   (e,k)=>`Someone in ${e} asks you to back up a claim you just made. Answer first, then the proof.`,
+   (e,k)=>`You get an off-script question in ${e}. Take one second, then answer in ${k.limit} seconds.`,
+   (e,k)=>`Someone asks what the point of ${e} is. Answer in one sentence, then two of support.`],
+ status:[(e,k)=>`In ${k.limit} seconds, say where you stand with ${e}: what is ready, what is not, what you do next, and when.`,
+   (e,k)=>`Open ${e} in ${k.limit} seconds: why you are here, what you will cover, what you want at the end.`,
+   (e,k)=>`Close ${e}: decisions, owners, dates, and when you follow up.`,
+   (e,k)=>`Something changed right before ${e}. Say what changed, what it affects, and how you are adjusting.`],
+ hold:[(e,k)=>`Someone in ${e} disagrees with you in front of everyone. Acknowledge, one fact, the alternative, ask for the decision.`,
+   (e,k)=>`Someone tries to cut ${e} short. Hold your ground and name what they lose.`,
+   (e,k)=>`A challenge in ${e} questions a number you gave. Say how you know, in ${k.limit} seconds.`,
+   (e,k)=>`Someone in ${e} pushes you to agree to something you cannot. Say no and give what you can.`],
+ exec:[(e,k)=>`Give the ${k.limit}-second version of ${e} to a decision maker: conclusion, impact, recommendation, decision needed.`,
+   (e,k)=>`Make the single strongest point of ${e} in ${k.limit} seconds and ask for what you want.`,
+   (e,k)=>`Present two options in ${e} and the one you recommend, then ask for the call.`,
+   (e,k)=>`Someone asks for the one-line takeaway from ${e}. Give it, then two sentences of support.`]};
+const AREA_HINTS={
+ sales:["sale","sales","deal","client","renewal","pipeline","prospect","quota","account","pricing","negotiat","customer"],
+ clinical:["patient","nurse","clinic","medical","doctor","health","care","bedside","hospital","therapy","pharma"],
+ lead:["leader","manager","team","board","executive","strategy","budget","hiring","reorg","stakeholder","director"],
+ case:["interview","acting","audition","court","law","legal","debate","argument","persuas","pitch me","teaching","speech","story","presentation","podcast","audition"],
+ pressure:["incident","outage","bridge","escalation","intune","m365","microsoft","server","network","security","ticket","sla","migration","support"]};
+function areaForTheme(topic){const t=String(topic).toLowerCase();let best=null,hits=0;
+  for(const [k,words] of Object.entries(AREA_HINTS)){const n=words.filter(w=>t.includes(w)).length;if(n>hits){hits=n;best=k;}}
+  return best||"case";}
 function kindKey(kind){const ks=CATS[profile().cat].kinds;return Object.keys(ks).find(k=>ks[k]===kind)||"answer";}
 function profile(){const p=(S.prog&&S.prog.profile)||{};let cat=p.cat||p.role||"pressure";if(!CATS[cat])cat="pressure";return {cat,audience:p.audience||"client",topic:p.topic||"",set:!!p.set};}
 async function setProfile(patch){S.prog.profile=Object.assign(profile(),patch);await saveProg();}
@@ -1342,37 +1427,55 @@ function kindsFor(){return Object.values(CATS[profile().cat].kinds);}
 function kindByIndex(di,levelN){const ks=Object.values(CATS[profile().cat].kinds);return ks[di%(levelN>=3?4:2)];}
 function promptFor(kind,di){const pr=profile();
   if(pr.topic){const gen=(pr.themePrompts||{})[kindKey(kind)];if(gen&&gen.length)return pick(gen,di);
-    return (THEME_TEMPLATES[kindKey(kind)]||THEME_TEMPLATES.answer)(pr.topic,kind);}
+    const ref=subjectRef(pr.topic);const set=ref.mode==="role"?ROLE_TEMPLATES:ref.mode==="event"?EVENT_TEMPLATES:THEME_TEMPLATES;
+    const list=set[kindKey(kind)]||set.answer;return pick(list,di)(ref.p,kind);}
   return pick(kind.prompts,di);}
 async function generateThemePrompts(topic){
   if(!S.sample)return null;
-  const cat=CATS[profile().cat];
-  const ask=`Write speaking-practice prompts about "${topic}" for someone who practises ${cat.name} (${cat.sub}), speaking to ${AUDIENCES[profile().audience]}.
+  const cat=CATS[profile().cat];const ref=subjectRef(topic);
+  const who=ref.mode==="role"?`someone who works as ${ref.p}`:ref.mode==="event"?`someone preparing for ${ref.p}`:`someone working on ${topic}`;
+  const ask=`Write speaking-practice prompts for ${who}, who practises ${cat.name} (${cat.sub}) and speaks to ${AUDIENCES[profile().audience]}.
 Return JSON only: {"scripts":["..","..",".."],"answer":["..","..",".."],"status":["..","..",".."],"hold":["..","..",".."],"exec":["..","..",".."]}
-scripts: three model answers about ${topic}, written the way a confident speaker would say them out loud, 4 short sentences each, separated by " / " between sentences, with a number or a time in each.
-answer: a hard question someone asks them about ${topic}. status: a situation where they give a short update about ${topic}. hold: someone pushes back on their position about ${topic}. exec: they brief a decision maker about ${topic}.
+scripts: three model answers from ${who}, written the way a confident speaker would say them out loud, 4 short sentences each, separated by " / " between sentences, with a number or a time in each.
+answer: a hard question someone asks them. status: a situation where they give a short update on their work. hold: someone pushes back on their position. exec: they brief a decision maker.
+Every prompt must be specific to ${who}: name real situations, people and numbers from that world.
 Each prompt is one or two sentences, concrete, with a named situation and a number or a time where it fits. No em dashes, no semicolons.`;
   try{const r=await askJSON(ask);return r&&r.answer?r:null;}catch(e){return null;}
 }
 function profileCard(onDone){
   const pr=profile();const id=uid();
-  const el=h(`<div class="card setup"><h2>Pick your area</h2>
-    <p class="muted" style="font-size:14px">Prompts, structures and scoring follow this.</p>
-    <div class="catlist" id="${id}-c">${Object.entries(CATS).map(([k,v])=>`<button type="button" data-k="${k}" class="catbtn ${pr.cat===k?"on":""}"><b>${esc(v.name)}</b><span>${esc(v.sub)}</span></button>`).join("")}</div>
-    <div><label>Who you speak to most</label><div class="chips" id="${id}-a">${Object.keys(AUDIENCES).map(k=>`<button type="button" data-k="${k}" class="chip ${pr.audience===k?"on":""}">${esc(k[0].toUpperCase()+k.slice(1))}</button>`).join("")}</div></div>
-    <div><label for="${id}-t">Your own topic or theme (optional)</label><input id="${id}-t" type="text" placeholder="e.g. Acting, Intune rollout, my architect interview" value="${esc(pr.topic)}">
+  const el=h(`<div class="card setup"><h2>What do you want to practise?</h2>
+    <p class="muted" style="font-size:14px">Type your own theme, or pick a ready-made area below.</p>
+    <div><label for="${id}-t2">Search your role or subject</label>
+      <input id="${id}-t2" type="text" autocomplete="off" placeholder="nurse, sales, acting, interview, Intune rollout" value="${esc(pr.topic)}">
+      <div id="${id}-sg" class="suggest" hidden></div>
+      <div id="${id}-pop" class="chips pop"></div>
       <div id="${id}-th" class="themecard" hidden></div></div>
+    <details class="guide" id="${id}-adv"><summary>Or pick a ready-made area</summary>
+    <div class="catlist" id="${id}-c">${Object.entries(CATS).map(([k,v])=>`<button type="button" data-k="${k}" class="catbtn ${pr.cat===k?"on":""}"><b>${esc(v.name)}</b><span>${esc(v.sub)}</span></button>`).join("")}</div></details>
+    <div><label>Who you speak to most</label><div class="chips" id="${id}-a">${Object.keys(AUDIENCES).map(k=>`<button type="button" data-k="${k}" class="chip ${pr.audience===k?"on":""}">${esc(k[0].toUpperCase()+k.slice(1))}</button>`).join("")}</div></div>
     <button class="primary bigstart" type="button" id="${id}-s">Save and start</button></div>`);
   el.querySelectorAll(".catlist,.chips").forEach(box=>box.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;[...box.children].forEach(c=>c.classList.remove("on"));b.classList.add("on");}));
-  const ti=$("#"+id+"-t",el),tc=$("#"+id+"-th",el),cl=$("#"+id+"-c",el);
-  const paint=()=>{const v=ti.value.trim();tc.hidden=!v;cl.classList.toggle("dim",!!v);
-    if(v)tc.innerHTML=`<div class="themeon"><b>Theme: ${esc(v)}</b><span>Every prompt will be about ${esc(v)}. Structures still come from the area above.</span><button type="button" class="linkbtn" id="${id}-clear">Clear theme</button></div>`;
-    const c=$("#"+id+"-clear",tc);if(c)c.onclick=()=>{ti.value="";paint();};};
+  const ti=$("#"+id+"-t2",el),tc=$("#"+id+"-th",el),cl=$("#"+id+"-c",el),adv=$("#"+id+"-adv",el),sg=$("#"+id+"-sg",el),pop=$("#"+id+"-pop",el);
+  const POP=["Microsoft 365 engineer","Job interview","Sales representative","Nurse","Team lead","Acting"];
+  pop.innerHTML=POP.map(n=>`<button type="button" class="chip" data-n="${esc(n)}">${esc(n)}</button>`).join("");
+  pop.addEventListener("click",e=>{const b=e.target.closest(".chip");if(!b)return;ti.value=b.dataset.n;paint();});
+  const paintSuggest=()=>{const hits=searchSubjects(ti.value);const exact=SUBJECTS.some(([n])=>n.toLowerCase()===ti.value.trim().toLowerCase());
+    sg.hidden=!hits.length||exact;if(!sg.hidden)sg.innerHTML=hits.map(([n,a])=>`<button type="button" data-n="${esc(n)}"><b>${esc(n)}</b><span>${esc(CATS[a].name)}</span></button>`).join("");};
+  sg.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;ti.value=b.dataset.n;sg.hidden=true;paint();});
+  const paint=()=>{const v=ti.value.trim();paintSuggest();pop.hidden=!!v;
+    const picking=!sg.hidden;tc.hidden=!v||picking;if(v)adv.open=false;
+    if(v&&!picking){const area=CATS[areaForSubject(v)];
+      [...cl.children].forEach(c=>c.classList.remove("on"));adv.open=false;
+      const rf=subjectRef(v);const whoTxt=rf.mode==="role"?"written for "+rf.p:rf.mode==="event"?"built around "+rf.p:"about "+v;
+      tc.innerHTML=`<div class="themeon"><b>Theme: ${esc(v)}</b><span>Every prompt is ${esc(whoTxt)}. Coaching structure: ${esc(area.name)}.</span><button type="button" class="linkbtn" id="${id}-clear">Clear theme</button></div>`;
+      const c=$("#"+id+"-clear",tc);if(c)c.onclick=()=>{ti.value="";paint();};}
+    else if(!v){const cur=profile().cat;[...cl.children].forEach(c=>c.classList.toggle("on",c.dataset.k===cur));adv.open=true;}};
   ti.addEventListener("input",paint);paint();
-  $("#"+id+"-s",el).onclick=async(e)=>{const c=$("#"+id+"-c .on",el),a=$("#"+id+"-a .on",el);const topic=$("#"+id+"-t",el).value.trim();
+  $("#"+id+"-s",el).onclick=async(e)=>{const c=$("#"+id+"-c .on",el),a=$("#"+id+"-a .on",el);const topic=$("#"+id+"-t2",el).value.trim();
     const b=e.currentTarget;b.disabled=true;
     const changed=topic&&topic!==pr.topic;
-    await setProfile({cat:c?c.dataset.k:"pressure",audience:a?a.dataset.k:"client",topic,set:true,themePrompts:changed?null:(S.prog.profile||{}).themePrompts});
+    await setProfile({cat:topic?areaForSubject(topic):(c?c.dataset.k:"pressure"),audience:a?a.dataset.k:"client",topic,set:true,themePrompts:changed?null:(S.prog.profile||{}).themePrompts});
     if(changed&&S.sample){b.textContent="Writing prompts about "+topic+"…";const gen=await generateThemePrompts(topic);if(gen)await setProfile({themePrompts:gen});}
     b.disabled=false;toast(topic?"Theme set: "+topic:"Saved");onDone?onDone():renderHome();};
   return el;
@@ -1443,7 +1546,7 @@ function renderHome(){
       <h2>${done?"Session done today":esc(p.kind.name)}</h2>
       <p class="goal">Stage ${p.stage.stage} of 4: ${esc(p.stage.name)}. ${esc(p.stage.how)}</p>
       <p class="goal" style="font-size:13px">Focus: ${esc(FOCUS_NAMES[p.focus]||p.focus)} · about 12 minutes · ${esc(p.stage.next)}</p>
-      <p class="goal" style="font-size:13px">${esc(CATS[p.profile.cat].name)}${p.profile.topic?" · "+esc(p.profile.topic):""} · for ${esc(p.profile.audience)}</p>
+      <p class="goal" style="font-size:13px">${p.profile.topic?"Theme: "+esc(p.profile.topic)+" · ":""}${esc(CATS[p.profile.cat].name)} · for ${esc(p.profile.audience)}</p>
     </div>
     <div class="homestats">
       <div class="stat"><b>${st}</b><span>day streak</span></div>
