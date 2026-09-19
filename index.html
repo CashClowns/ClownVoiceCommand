@@ -506,6 +506,13 @@ button.rec.on .dot{border-radius:7px;background:#0A0A0A;box-shadow:none;width:22
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chip{min-height:44px;border-radius:999px;padding:8px 14px;font-size:14px}
 .chip.on{background:var(--y-grad);color:#0A0A0A;border:1px solid #FFE27A;border-bottom-color:#B98800;box-shadow:var(--y-shadow);font-weight:600}
+
+.catlist{display:flex;flex-direction:column;gap:8px}
+.catbtn{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;min-height:62px;padding:10px 14px;border-radius:12px}
+.catbtn b{font-size:16px}
+.catbtn span{font-size:13px;color:var(--muted)}
+.catbtn.on{background:var(--y-grad);color:#0A0A0A;border:1px solid #FFE27A;border-bottom-color:#B98800;box-shadow:var(--y-shadow)}
+.catbtn.on span{color:#3a3000}
 </style>
 <style>:root{padding-top:env(safe-area-inset-top,0px)} html,body{margin:0} img{max-width:100%}</style>
 </head>
@@ -775,8 +782,8 @@ const BASELINE={fillers:2.7,hedges:2.7,tics:7,cf:0.2,vocab:0,scores:{clarity:3,p
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="config.js?v=14"></script>
-<script src="analyzer.js?v=14"></script>
+<script src="config.js?v=16"></script>
+<script src="analyzer.js?v=16"></script>
 <script>
 /* ================= APP ================= */
 const $=(s,r=document)=>r.querySelector(s);
@@ -1082,7 +1089,7 @@ function stopSR(el){if(el._sr){el._srOn=false;try{el._sr.stop();}catch(e){}el._s
 const PHRASES=WORDS.map(w=>w[0]).join(", ");
 function scorePrompt(ctx,text,loc,au){const lv=L();return `You are Daniel's executive and technical communication coach. Daniel is a Senior Microsoft 365 Engineer at an MSP. Hard coach: respectful and plain, no generic praise.
 Score one practice rep. It was spoken, then dictated or typed, so judge wording and structure. Delivery is not assessed.
-Audience: ${AUDIENCES[profile().audience]||"a client"}. Role context: ${(ROLES[profile().role]||ROLES.msp).name}.
+Audience: ${AUDIENCES[profile().audience]||"a client"}. Practice area: ${CATS[profile().cat].name}.
 Level: ${lv.n} ${lv.name}. Exercise: ${ctx.type}. Required structure: ${ctx.structure.join(" > ")}. Time limit: ${ctx.limitSec||60} seconds.
 Scenario: ${ctx.prompt}
 His answer: """${text}"""
@@ -1218,143 +1225,162 @@ function pager(items){
 function beep(){try{const c=new (window.AudioContext||window.webkitAudioContext)();const o=c.createOscillator(),g=c.createGain();o.frequency.value=660;g.gain.value=.08;o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+.35);setTimeout(()=>c.close(),600);}catch(e){}}
 
 /* ---------- HOME ---------- */
-/* ---------- roles, audiences and topics ---------- */
-const ROLES={
- msp:{name:"IT / Microsoft 365",kinds:{
-   answer:["A client asks: \"Is our email down or is it just me?\" Three users have no mail since 8:40. MX still points to the old host after last night's DNS change.",
-     "Your manager asks: \"Why did the new laptops fail Autopilot?\" The hardware hashes were never uploaded.",
-     "A client asks: \"Why can't my new hire sign in?\" She is not in the group her device's Conditional Access policy requires.",
-     "A client asks: \"Did we get hacked?\" One impossible-travel alert, and the session came from the user's own VPN exit."],
-   status:["Status at 9:30: Teams calls drop for 30 users since 8:15. Licensing ruled out. Network team checking QoS.",
-     "Status: 22 of 60 new devices fail Intune enrollment at the Enrollment Status Page. A required app is timing out.",
-     "Status: external sharing blocked tenant-wide after a 6:00 policy change. Reverting now, up to an hour to take effect.",
-     "Status: a phishing email hit 140 inboxes at 10:05, purged at 10:22, two users clicked, sessions revoked."],
-   hold:["The client VP says: \"Just roll it all back right now.\" Rolling back reopens a critical vulnerability.",
-     "The client says: \"This is your fault.\" Root cause is their own DNS change. Say it without blaming.",
-     "An exec demands an ETA in the next 60 seconds. You are waiting on Microsoft engineering.",
-     "Your manager says: \"Skip the change ticket, just push it.\" The change freeze runs through Friday."],
-   exec:["Recommend retiring the on-prem Exchange hybrid for a 300-user client.",
-     "Recommend enforcing phishing-resistant MFA for admins across all managed tenants.",
-     "Brief the client CEO after a 2-hour mail outage: root cause, contributing factor, prevention.",
-     "Recommend a standard security baseline sold as a service tier."]}},
- sales:{name:"Sales / account management",kinds:{
-   answer:["The buyer asks: \"Why are you more expensive than the other vendor?\" You are 20% higher and include onboarding.",
-     "The buyer asks: \"Can you go live by the end of the quarter?\" Two of four steps depend on their IT team.",
-     "The buyer asks: \"Who else like us uses this?\" You have two similar customers and one in a different industry.",
-     "The buyer asks: \"What happens if it does not work out?\" There is a 30-day exit clause."],
-   status:["Status to your manager on the deal: verbal yes from the champion, legal review pending, close date at risk by one week.",
-     "Status on the pilot: 14 of 20 users active, two blockers, decision meeting Thursday.",
-     "Status on renewal: usage is down 30%, the sponsor left the company, new sponsor meets you Monday.",
-     "Status: contract sent 5 days ago, no signature, procurement asked for two redlines."],
-   hold:["The buyer says: \"Give me another 15% or we walk.\" Your floor is 5%.",
-     "The buyer blames your team for a delay their security review caused.",
-     "Your manager pushes you to promise a date engineering has not agreed to.",
-     "The buyer says: \"Send me everything by email, I will decide later.\" You need a meeting."],
-   exec:["Ask your leadership to approve a discount, with the business case.",
-     "Brief leadership on why the deal slipped and what changes.",
-     "Recommend killing a stalled deal and where to put the time instead.",
-     "Present the quarter forecast: committed, best case, and the two risks."]}},
- manager:{name:"Team lead / manager",kinds:{
-   answer:["A team member asks: \"Why did my project get deprioritized?\" Two higher-priority items landed this week.",
-     "Your director asks: \"Why did the ticket backlog grow?\" One engineer left and volume is up 18%.",
-     "A peer asks: \"Can your team take this on?\" You are already at capacity.",
-     "A team member asks: \"Am I on track for promotion?\" Two of five criteria are not met yet."],
-   status:["Weekly status to leadership: three projects, one green, one yellow with a named risk, one blocked on a vendor.",
-     "Status on hiring: two offers out, one candidate in final stage, start dates affect the Q4 plan.",
-     "Status on the incident backlog: down 12% week over week, one repeat issue, fix planned Friday.",
-     "Status on the migration: 60% complete, one blocker, next milestone Monday."],
-   hold:["Your director asks the team to absorb a new project with no added people.",
-     "A team member pushes back on a decision you already made and communicated.",
-     "A peer manager blames your team publicly for a missed handoff.",
-     "Leadership asks for a date you cannot commit to yet."],
-   exec:["Ask leadership for one more headcount, with the numbers.",
-     "Recommend cutting a project to protect two others.",
-     "Brief leadership on a team member's mistake and what changes now.",
-     "Present the quarterly plan: outcomes, risks, and the decision you need."]}},
- interview:{name:"Interview prep",kinds:{
-   answer:["Tell me about yourself in 60 seconds.",
-     "Why are you leaving your current role?",
-     "Tell me about a time you disagreed with a senior colleague.",
-     "What is the hardest problem you have solved, and how?"],
-   status:["Walk me through a project you led, start to finish, in 45 seconds.",
-     "Describe your current role and what you own.",
-     "Walk me through your last 12 months and what changed because of you.",
-     "Describe a failure and what you changed afterwards."],
-   hold:["The interviewer says your experience looks light for this role.",
-     "The interviewer challenges a number you gave and asks how you know.",
-     "The interviewer asks why you have changed jobs often.",
-     "The interviewer says another candidate has more certifications."],
-   exec:["Why you, why this role, why now, in 90 seconds.",
-     "What would your first 90 days look like?",
-     "What do you want to be doing in three years, and why here?",
-     "Give your salary expectation and defend it."]}},
- teaching:{name:"Teaching / training",kinds:{
-   answer:["A student asks: \"Why do we need to learn this?\" Give the practical reason in 45 seconds.",
-     "A parent asks why their child's grade dropped. Two missed assignments and one low test.",
-     "A trainee asks: \"Can you explain that again, simpler?\"",
-     "A colleague asks how your new method is working. Early results are mixed."],
-   status:["Status to your lead: class progress, two students behind, plan for next week.",
-     "Status on the training rollout: 3 of 5 sessions done, attendance at 80%, one module needs rework.",
-     "Status on the program: results up 8%, one group flat, change planned Monday.",
-     "Status before a parent meeting: what happened, what you did, what happens next."],
-   hold:["A parent says the grading is unfair.",
-     "A trainee says the session was a waste of time.",
-     "Your lead asks you to cut the part of the course that works best.",
-     "A colleague questions your method in front of the group."],
-   exec:["Ask leadership to fund materials, with the outcome you expect.",
-     "Recommend a change to the curriculum and the decision you need.",
-     "Brief leadership on results this term and what you would change.",
-     "Present the case for a new program in 90 seconds."]}},
- general:{name:"General professional",kinds:{
-   answer:["A colleague asks why the deadline moved. One dependency slipped by three days.",
-     "Your manager asks what went wrong this week and what you are doing about it.",
-     "A stakeholder asks whether the plan still works after a budget cut.",
-     "Someone asks you to explain your work to a person outside your field."],
-   status:["Give a 45-second status on your main project: state, impact, next step, next update.",
-     "Status on the task you own: what is done, what is blocked, when it lands.",
-     "Status after a setback: what happened, what it costs, what you are doing.",
-     "Status before a decision meeting: where things stand and what you need."],
-   hold:["Someone pushes you to commit to a date you cannot hit.",
-     "A colleague blames you for a delay that was not yours.",
-     "Your manager dismisses your recommendation without hearing it.",
-     "A stakeholder demands a change that breaks the plan."],
-   exec:["Recommend a change to leadership and ask for the decision.",
-     "Present the case for more time or more budget in 90 seconds.",
-     "Brief leadership after a mistake: cause, fix, prevention.",
-     "Present two options with a tradeoff and your recommendation."]}}
-};
-const AUDIENCES={engineer:"an engineer who wants the mechanism",manager:"a manager who wants impact and dates",exec:"an executive who wants the conclusion and the decision",client:"a client who wants reassurance and a time"};
-const TOPIC_TEMPLATES={
- answer:t=>`A colleague asks you a hard question about ${t}. Answer it in 45 seconds, answer first.`,
- status:t=>`Give a 45-second status update on ${t}: current state, impact, what you are doing, next update time.`,
- hold:t=>`Someone pushes back hard on your position about ${t}. Hold it without getting defensive.`,
- exec:t=>`Brief an executive on ${t} in 90 seconds: conclusion, impact, recommendation, decision needed.`};
-function profile(){const p=(S.prog&&S.prog.profile)||{};return {role:p.role||"msp",audience:p.audience||"client",topic:p.topic||""};}
-async function setProfile(patch){S.prog.profile=Object.assign(profile(),patch);await saveProg();}
-function profileCard(onDone){
-  const pr=profile();const id=uid();
-  const el=h(`<div class="card setup"><h2>Tune it to your work</h2>
-    <p class="muted" style="font-size:14px">Prompts and scoring follow these.</p>
-    <div><label>Your role</label><div class="chips" id="${id}-r">${Object.entries(ROLES).map(([k,v])=>`<button type="button" data-k="${k}" class="chip ${pr.role===k?"on":""}">${esc(v.name)}</button>`).join("")}</div></div>
-    <div><label>Who you speak to most</label><div class="chips" id="${id}-a">${Object.entries(AUDIENCES).map(([k,v])=>`<button type="button" data-k="${k}" class="chip ${pr.audience===k?"on":""}">${esc(k[0].toUpperCase()+k.slice(1))}</button>`).join("")}</div></div>
-    <div><label for="${id}-t">Topic or theme (optional)</label><input id="${id}-t" type="text" placeholder="e.g. Intune rollout, Q4 renewal, my interview at NRI" value="${esc(pr.topic)}"></div>
-    <button class="primary" type="button" id="${id}-s">Save and start</button></div>`);
-  el.querySelectorAll(".chips").forEach(box=>box.addEventListener("click",e=>{const b=e.target.closest(".chip");if(!b)return;[...box.children].forEach(c=>c.classList.remove("on"));b.classList.add("on");}));
-  $("#"+id+"-s",el).onclick=async()=>{const role=$("#"+id+"-r .chip.on",el),aud=$("#"+id+"-a .chip.on",el);
-    await setProfile({role:role?role.dataset.k:"msp",audience:aud?aud.dataset.k:"client",topic:$("#"+id+"-t",el).value.trim(),set:true});
-    toast("Saved");onDone?onDone():renderHome();};
-  return el;
-}
-function promptFor(kind,di){
-  const pr=profile();
-  if(pr.topic)return TOPIC_TEMPLATES[kind](pr.topic);
-  const pack=ROLES[pr.role]||ROLES.msp;return pick(pack.kinds[kind],di);
-}
-
 function pick(arr,i){return arr[((i%arr.length)+arr.length)%arr.length];}
 function renderToday(){renderHome();}
 function refreshTodayStatus(){}
-/* ---------- HOME + SESSION PLAYER (one screen at a time) ---------- */
+/* ---------- five practice areas, each with its own structures ---------- */
+const CATS={
+ pressure:{name:"Under Pressure",sub:"Incidents, bridges, escalations, IT and ops",
+  kinds:{
+   answer:{name:"Answer first",limit:60,structure:["Answer","Evidence","Implication","What happens next"],prompts:[
+     "A client asks: \"Is our email down or is it just me?\" Three users have no mail since 8:40. The DNS change last night still points to the old host.",
+     "An exec interrupts your root-cause explanation and demands an ETA you do not have.",
+     "Your manager asks why the ticket is still open after three days. You are waiting on the vendor, case opened Monday."]},
+   status:{name:"Bridge update",limit:45,structure:["Status","Impact","Actions","Next update"],prompts:[
+     "Mail flow is down for 600 users. Give the first bridge update.",
+     "Status at 9:30: calls drop for 30 users since 8:15. Licensing ruled out. Network team checking.",
+     "Hand off a live P1 to the next shift in 60 seconds."]},
+   hold:{name:"Hold under pressure",limit:60,structure:["Acknowledge","Fact","Alternative","Decision needed"],prompts:[
+     "The client VP says: \"Just roll it all back right now.\" Rolling back reopens a critical vulnerability.",
+     "Brief the client on an outage your team's change caused. No blame shifting, no over-apology.",
+     "Your manager says: \"Skip the change ticket, just push it.\" The freeze runs through Friday."]},
+   exec:{name:"Executive brief",limit:90,structure:["Conclusion","Business impact","Recommendation","Decision needed"],prompts:[
+     "Brief the client CEO after a 2-hour outage: root cause, contributing factor, prevention.",
+     "Recommend enforcing phishing-resistant MFA for admins across every managed tenant.",
+     "Ask leadership for the time to build automation that saves the team 6 hours a week."]}}},
+ lead:{name:"Lead the Room",sub:"Leadership, management and executive updates",
+  kinds:{
+   answer:{name:"Bottom line first",limit:60,structure:["Conclusion","Business impact","Recommendation","Decision needed"],prompts:[
+     "You have 90 seconds with the CFO in a hallway. The migration is 3 weeks late. Brief her.",
+     "Your director asks in a staff meeting why your team missed the SLA. Answer.",
+     "A peer asks whether your team can take on a new project. You are already at capacity."]},
+   status:{name:"Weekly update",limit:45,structure:["Status","Impact","Actions","Next update"],prompts:[
+     "Weekly update to leadership: three projects, one green, one yellow with a named risk, one blocked on a vendor.",
+     "Status on hiring: two offers out, one in final stage, start dates affect the quarter plan.",
+     "Status on the program: results up 8%, one group flat, change planned Monday."]},
+   hold:{name:"Hold your position",limit:60,structure:["Acknowledge the goal","Risk with a fact","Alternative","Ask for the decision"],prompts:[
+     "Your director asks the team to absorb a new project with no added people.",
+     "A peer manager blames your team publicly for a missed handoff.",
+     "A team member pushes back on a decision you already made and communicated."]},
+   exec:{name:"Board-level case",limit:90,structure:["Situation","Complication","Question","Answer"],prompts:[
+     "Present a $400,000 budget request to a skeptical board. Two minutes, no slides.",
+     "Deliver a reorg announcement to 40 people who lose their current manager.",
+     "Recommend cutting one project to protect two others."]}}},
+ sales:{name:"Win the Deal",sub:"Sales, account management and client calls",
+  kinds:{
+   answer:{name:"Answer the objection",limit:60,structure:["Acknowledge","Isolate","Reframe with evidence","Close on the next step"],prompts:[
+     "The prospect says you are 30% more expensive than the other quote. Respond without discounting.",
+     "The buyer asks: \"Who else like us uses this?\" You have two similar customers and one in another industry.",
+     "The buyer asks what happens if it does not work out. There is a 30-day exit clause."]},
+   status:{name:"Deal status",limit:45,structure:["Where it stands","Risk","What you are doing","Next step and date"],prompts:[
+     "Status to your manager: verbal yes from the champion, legal review pending, close date at risk by a week.",
+     "Status on the pilot: 14 of 20 users active, two blockers, decision meeting Thursday.",
+     "Status on renewal: usage down 30%, sponsor left, new sponsor meets you Monday."]},
+   hold:{name:"Hold the price",limit:60,structure:["Acknowledge","Fact","Alternative","Ask for the decision"],prompts:[
+     "The buyer says: \"Give me another 15% or we walk.\" Your floor is 5%.",
+     "The buyer blames your team for a delay their own security review caused.",
+     "The buyer says: \"Just email it, I will decide later.\" You need the meeting."]},
+   exec:{name:"Discovery and pitch",limit:90,structure:["Metrics","Economic buyer","Decision criteria","Next step"],prompts:[
+     "Open a discovery call with a VP of IT who says they already have a vendor.",
+     "Deliver a 3-minute pitch to a room with one champion and one blocker.",
+     "Their renewal is in 14 days and they just had an outage. Open the call."]}}},
+ clinical:{name:"At the Bedside",sub:"Clinical handoffs, patients and families",
+  kinds:{
+   answer:{name:"Plain-language answer",limit:60,structure:["Answer in plain words","Why","What it means for you","Teach-back"],prompts:[
+     "Explain a new blood thinner to a patient at a sixth-grade reading level, then ask them to repeat it back.",
+     "A patient asks why the test is being repeated. The first sample was hemolyzed.",
+     "A family asks what the plan is for today. Two consults are pending."]},
+   status:{name:"SBAR handoff",limit:45,structure:["Situation","Background","Assessment","Recommendation"],prompts:[
+     "Page the attending at 2am about a patient whose vitals are deteriorating. Use SBAR.",
+     "Hand off four patients to the incoming shift in 60 seconds.",
+     "Escalate a patient whose pain is uncontrolled after two doses."]},
+   hold:{name:"De-escalate",limit:60,structure:["Acknowledge","Fact","What I will do","When"],prompts:[
+     "A patient's daughter says the night nurse did nothing all night. De-escalate without blaming staff.",
+     "A patient refuses a medication they need. Hold the plan without arguing.",
+     "A colleague questions your assessment in front of the family."]},
+   exec:{name:"Difficult news",limit:90,structure:["Warning shot","The facts","Pause","Next step"],prompts:[
+     "Tell a family the scan shows metastatic disease. They brought a child into the room.",
+     "Tell a patient the surgery is postponed and what happens now.",
+     "Brief the care team on an error that reached the patient."]}}},
+ case:{name:"Make the Case",sub:"Interviews, advocacy and persuasion",
+  kinds:{
+   answer:{name:"STAR answer",limit:60,structure:["Situation","Task","Action","Result"],prompts:[
+     "Answer \"tell me about a time you failed\" in 75 seconds.",
+     "Tell me about a time you disagreed with a senior colleague.",
+     "What is the hardest problem you have solved, and how?"]},
+   status:{name:"Tell me about yourself",limit:45,structure:["Who you are","What you own","Proof","What you want next"],prompts:[
+     "Tell me about yourself in 45 seconds.",
+     "Walk me through your last 12 months and what changed because of you.",
+     "Describe your current role and what you own."]},
+   hold:{name:"Hold under challenge",limit:60,structure:["Acknowledge","Rule or fact","Application","The ask"],prompts:[
+     "The interviewer says your experience looks light for this role.",
+     "Argue for your promotion to a director who already said the budget is frozen.",
+     "The interviewer challenges a number you gave and asks how you know."]},
+   exec:{name:"Opening statement",limit:90,structure:["Theme","Roadmap","Story","The ask"],prompts:[
+     "Give a 2-minute opening statement in a contract dispute. Lead with your theme.",
+     "Why you, why this role, why now, in 90 seconds.",
+     "Make the case for a decision your audience is leaning against."]}}}
+};
+const AUDIENCES={engineer:"an engineer who wants the mechanism",manager:"a manager who wants impact and dates",exec:"an executive who wants the conclusion and the decision",client:"a client or patient who wants reassurance and a time"};
+const TOPIC_NOTE=t=>` Context: ${t}.`;
+function profile(){const p=(S.prog&&S.prog.profile)||{};let cat=p.cat||p.role||"pressure";if(!CATS[cat])cat="pressure";return {cat,audience:p.audience||"client",topic:p.topic||"",set:!!p.set};}
+async function setProfile(patch){S.prog.profile=Object.assign(profile(),patch);await saveProg();}
+function kindsFor(){return Object.values(CATS[profile().cat].kinds);}
+function kindByIndex(di,levelN){const ks=Object.values(CATS[profile().cat].kinds);return ks[di%(levelN>=3?4:2)];}
+function promptFor(kind,di){const pr=profile();const base=pick(kind.prompts,di);return pr.topic?base+TOPIC_NOTE(pr.topic):base;}
+function profileCard(onDone){
+  const pr=profile();const id=uid();
+  const el=h(`<div class="card setup"><h2>Pick your area</h2>
+    <p class="muted" style="font-size:14px">Prompts, structures and scoring follow this.</p>
+    <div class="catlist" id="${id}-c">${Object.entries(CATS).map(([k,v])=>`<button type="button" data-k="${k}" class="catbtn ${pr.cat===k?"on":""}"><b>${esc(v.name)}</b><span>${esc(v.sub)}</span></button>`).join("")}</div>
+    <div><label>Who you speak to most</label><div class="chips" id="${id}-a">${Object.keys(AUDIENCES).map(k=>`<button type="button" data-k="${k}" class="chip ${pr.audience===k?"on":""}">${esc(k[0].toUpperCase()+k.slice(1))}</button>`).join("")}</div></div>
+    <div><label for="${id}-t">Topic or theme (optional)</label><input id="${id}-t" type="text" placeholder="e.g. Intune rollout, Q4 renewal, my architect interview" value="${esc(pr.topic)}"></div>
+    <button class="primary bigstart" type="button" id="${id}-s">Save and start</button></div>`);
+  el.querySelectorAll(".catlist,.chips").forEach(box=>box.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;[...box.children].forEach(c=>c.classList.remove("on"));b.classList.add("on");}));
+  $("#"+id+"-s",el).onclick=async()=>{const c=$("#"+id+"-c .on",el),a=$("#"+id+"-a .on",el);
+    await setProfile({cat:c?c.dataset.k:"pressure",audience:a?a.dataset.k:"client",topic:$("#"+id+"-t",el).value.trim(),set:true});
+    toast("Saved");onDone?onDone():renderHome();};
+  return el;
+}
+
+
+/* ---------- model scripts for the reading stages ---------- */
+const MODELS={
+ pressure:[
+  "Mail flow is down for the Houston office. / About 40 users cannot send or receive. / Root cause is an expired certificate on the outbound connector. / I renewed it at 2:10 and mail is queued, not lost. / Next update at 2:45.",
+  "Yes, the outage is on our side. / A policy I pushed at 6:00 blocked external sharing. / I am reverting it now and it takes up to an hour to reach everyone. / I own this. / Next update at 3:30.",
+  "I do not have a confirmed ETA yet. / Microsoft has the case at Severity A and engineering is engaged. / What I can tell you is the workaround holds and no data is lost. / I will have a confirmed time by 4:00."],
+ lead:[
+  "We will miss the Friday date by three weeks. / The cost is one delayed client launch, not lost revenue. / I recommend we move the launch to the 24th and keep the pilot on schedule. / I need that decision today.",
+  "Two of three projects are green. / The security review is blocked on a vendor, which puts the November milestone at risk. / I am escalating to their account team today. / I will report back Thursday.",
+  "I am asking for one more engineer. / We are carrying 18% more tickets than last quarter with the same team. / One hire brings response back inside SLA in about six weeks. / I need a yes or no by the 30th."],
+ sales:[
+  "We are 30% higher, and here is what that buys. / Onboarding is included, so your team does not spend 40 hours on setup. / Customers like Brightwater went live in nine days. / Can we walk through your rollout plan on Thursday?",
+  "Where we stand: your champion said yes, legal has the redlines, and close moves a week if they do not respond by Friday. / I am calling their counsel today. / I will confirm by Friday at noon.",
+  "I hear you on the budget. / At 15% I cannot include onboarding, and that is the part that saves your team the most time. / What I can do is 5% and a phased start. / Which of those matters more to you?"],
+ clinical:[
+  "This is about your blood thinner. / It keeps clots from forming, which is why we started it after the procedure. / You take one tablet in the morning with food, every day. / Tell me in your own words how you will take it.",
+  "Situation: room 412, Mr. Alvarez, blood pressure 82 over 50. / Background: post-op day two, on antibiotics since Tuesday. / Assessment: I think he is septic. / Recommendation: I need you at the bedside now and orders for fluids.",
+  "I want to make sure you were heard. / Last night the team checked him every two hours and his oxygen stayed stable. / I will sit with you now and go through the chart. / I will update you again before my shift ends at 7:00."],
+ case:[
+  "The situation was a failed migration two hours before a client cutover. / My task was to get 200 mailboxes live by 6 AM. / I isolated the failure to a throttling policy, changed it, and restarted the batch. / Result: all 200 finished by 5:40 and the client never saw the delay.",
+  "I am a senior engineer who runs escalations. / I own the Microsoft 365 estate for 40 client tenants. / Last year I cut our repeat incidents by a third. / I am looking for the architect seat next.",
+  "This case is about a promise that was not kept. / I will show you the contract, the delivery dates, and three emails. / When you have seen them you will find for my client. / I am asking for the full amount."]
+};
+function stageInfo(){
+  const done=sortedSessions().filter(s=>!s.baseline&&s.sessionDone);
+  const n=done.length;
+  const recent=done.slice(-3).map(s=>s.analyzer&&s.analyzer.vq).filter(v=>v!=null);
+  const avg=recent.length?recent.reduce((a,b)=>a+b,0)/recent.length:0;
+  let stage=1;
+  if(n>=3&&avg>=65)stage=2;
+  if(n>=6&&avg>=70)stage=3;
+  if(n>=10&&avg>=75)stage=4;
+  const names=["Read it","Read then say it","Say it with the structure","Answer cold"];
+  const how=["Read the script out loud. Delivery only, no thinking about words.","Read it once, then say it again from three keywords.","Answer in your own words with the structure on screen.","Answer cold. No structure, tighter time."];
+  return {stage,n,avg:Math.round(avg),name:names[stage-1],how:how[stage-1],
+    next:stage<4?`Stage ${stage+1} unlocks at ${[3,6,10][stage-1]} sessions and a voice score of ${[65,70,75][stage-1]}.`:"Top stage."};
+}
 const FOCUS_NAMES={falling:"End sentences down",endsLow:"End below your pitch",rise:"Kill upspeak",trail:"Hold volume to the end",pace:"Pace",art:"Word speed",purposeful:"Deliberate pauses",freezes:"No freezes",mid:"No mid-sentence stalls",hes:"No um and uh",wobble:"Steady pitch",shimmer:"Steady volume",rhythm:"Even rhythm",levelSd:"Steady volume level",longest:"Shorter pauses",run:"Break at full stops",hnr:"Voice smoothness",cpps:"Tone clarity",crisp:"Crisp consonants",snr:"Quiet room",peak:"Mic level",range:"Pitch variety",dyn:"Loudness contrast",elev:"Pitch height",decl:"Pitch settles down",rushed:"Slow the numbers",slow:"Energy"};
 function lastSessions(n){return sortedSessions().filter(s=>!s.baseline&&s.analyzer).slice(-n);}
 function todayFocus(){
@@ -1364,12 +1390,9 @@ function todayFocus(){
 }
 function sessionPlan(){
   const lv=L(),di=dayIndex();
-  const kinds=[{k:"answer",name:"Answer first",limit:60,structure:lv.structure,prompts:lv.reps.prompts},
-               {k:"status",name:"Status update",limit:45,structure:["Current state","Impact","What we're doing","Next update time"],prompts:LEVELS[1].reps.prompts},
-               {k:"hold",name:"Hold under pressure",limit:60,structure:["Acknowledge","Fact","Alternative","Decision needed"],prompts:LEVELS[2].bench.prompts},
-               {k:"exec",name:"Executive brief",limit:90,structure:["Conclusion","Business impact","Recommendation","Decision needed"],prompts:LEVELS[3].bench.prompts}];
-  const kind=kinds[di%(lv.n>=3?4:2)];
-  return {lv,di,kind,prompt:promptFor(kind.k,di),focus:todayFocus(),profile:profile()};
+  const kind=kindByIndex(di,lv.n);const stg=stageInfo();const pr=profile();
+  const script=pick(MODELS[pr.cat]||MODELS.pressure,di);
+  return {lv,di,kind,prompt:promptFor(kind,di),script,stage:stg,focus:todayFocus(),profile:pr};
 }
 function renderHome(){
   const v=$("#v-today");v.innerHTML="";setTimeout(showInstall,0);
@@ -1380,9 +1403,10 @@ function renderHome(){
   v.append(h(`<div class="home">
     <div class="hero">
       <span class="eyebrow">Level ${p.lv.n} · ${esc(p.lv.name)} · day ${p.di+1}</span>
-      <h2>${done?"Session done today":"Today: "+esc(p.kind.name)}</h2>
-      <p class="goal">Focus: ${esc(FOCUS_NAMES[p.focus]||p.focus)}. About 12 minutes.</p>
-      <p class="goal" style="font-size:13px">${esc((ROLES[p.profile.role]||ROLES.msp).name)}${p.profile.topic?" · "+esc(p.profile.topic):""} · for ${esc(p.profile.audience)}</p>
+      <h2>${done?"Session done today":esc(p.kind.name)}</h2>
+      <p class="goal">Stage ${p.stage.stage} of 4: ${esc(p.stage.name)}. ${esc(p.stage.how)}</p>
+      <p class="goal" style="font-size:13px">Focus: ${esc(FOCUS_NAMES[p.focus]||p.focus)} · about 12 minutes · ${esc(p.stage.next)}</p>
+      <p class="goal" style="font-size:13px">${esc(CATS[p.profile.cat].name)}${p.profile.topic?" · "+esc(p.profile.topic):""} · for ${esc(p.profile.audience)}</p>
     </div>
     <div class="homestats">
       <div class="stat"><b>${st}</b><span>day streak</span></div>
@@ -1392,7 +1416,7 @@ function renderHome(){
     <button class="primary bigstart" id="startbtn" type="button">${done?"Run another session":"Start session"}</button>
     ${s&&s.commit?`<div class="commitcard"><div class="eyebrow">Your line for today's calls</div><p>${esc(s.commit)}</p></div>`:""}
     <button type="button" class="linkbtn" id="quickrec">Just record and analyze something</button>
-    <button type="button" class="linkbtn" id="editprof">Change role, audience or topic</button>
+    <button type="button" class="linkbtn" id="editprof">Change area, audience or topic</button>
   </div>`));
   $("#startbtn",v).onclick=()=>startSession(p);
   $("#quickrec",v).onclick=()=>startSession(p,true);
@@ -1423,10 +1447,14 @@ function stepView(id,state,go,total){
     el.append(nextBtn("Done, next",()=>go(state.step+1)));return el;
   }
   if(id==="say"){
-    const el=h(`<div class="stepbox"><div class="eyebrow">${esc(p.kind.name)} · say it in ${p.kind.limit}s</div><h3>${esc(p.prompt)}</h3>
-      <p class="muted">Structure: ${p.kind.structure.map(esc).join(" → ")}</p>
+    const stg=p.stage.stage;
+    const keywords=(p.script.split(" / ").map(s=>s.trim().split(/\s+/).slice(0,2).join(" ")).slice(0,4));
+    const head=stg===1?`<div class="eyebrow">Stage 1 · read it out loud in ${p.kind.limit}s</div><h3 class="say">${esc(p.script).replace(/ \/ /g,' <span class="slash">/</span> ')}</h3><p class="muted">Every slash is a full stop. Drop your pitch on the last word of each part.</p>`
+      :stg===2?`<div class="eyebrow">Stage 2 · read once, then say it from the keywords</div><h3 class="say">${esc(p.script).replace(/ \/ /g,' <span class="slash">/</span> ')}</h3><p class="muted">Now cover the script. Keywords: ${keywords.map(esc).join(" · ")}</p>`
+      :`<div class="eyebrow">${esc(p.kind.name)} · say it in ${p.kind.limit}s</div><h3>${esc(p.prompt)}</h3>${stg===3?`<p class="muted">Structure: ${p.kind.structure.map(esc).join(" → ")}</p>`:`<p class="muted">No structure on screen. Answer cold.</p>`}`;
+    const el=h(`<div class="stepbox">${head}
       <div class="recslot"></div>
-      <details class="words"><summary>Your words · tap to add</summary><textarea id="saytext" aria-label="What you said" placeholder="Fills in while you record where supported. Otherwise tap the keyboard mic and speak."></textarea></details></div>`);
+      <details class="words"${stg<=2?"":""}><summary>Your words · tap to add</summary><textarea id="saytext" aria-label="What you said" placeholder="Fills in while you record where supported. Otherwise tap the keyboard mic and speak."></textarea></details></div>`);
     const rec=recorderPanel(st=>{state.take1=st;$(".bignext",el).disabled=false;},{limit:p.kind.limit,hasText:true,big:true});
     $(".recslot",el).append(rec);
     const b=nextBtn("See my numbers",()=>{state.text1=$("#saytext",el).value;go(state.step+1);});b.disabled=!state.take1;el.append(b);
