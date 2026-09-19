@@ -712,8 +712,8 @@ const BASELINE={fillers:2.7,hedges:2.7,tics:7,cf:0.2,vocab:0,scores:{clarity:3,p
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="config.js?v=7"></script>
-<script src="analyzer.js?v=7"></script>
+<script src="config.js?v=8"></script>
+<script src="analyzer.js?v=8"></script>
 <script>
 /* ================= APP ================= */
 const $=(s,r=document)=>r.querySelector(s);
@@ -833,6 +833,9 @@ function gauge(label,valText,val,min,max,zones,target){
 const QLB=(v,good,bad)=>v==null||!isFinite(v)?null:v<=good?100:v>=bad?0:100*(bad-v)/(bad-good);
 const QHB=(v,bad,good)=>v==null||!isFinite(v)?null:v>=good?100:v<=bad?0:100*(v-bad)/(good-bad);
 const QBAND=(v,a,b,c,d)=>v==null||!isFinite(v)?null:v<b?QHB(v,a,b):v>c?QLB(v,c,d):100;
+function histGet(k){try{return JSON.parse(localStorage.getItem("cv-h-"+k)||"[]");}catch(e){return [];}}
+function histPush(k,v){if(v==null||!isFinite(v))return;try{const h=histGet(k);h.push(v);localStorage.setItem("cv-h-"+k,JSON.stringify(h.slice(-30)));}catch(e){}}
+function histBase(k,min){const h=histGet(k);if(h.length<(min||3))return null;const s=[...h].sort((a,b)=>a-b);return s[Math.floor(s.length/2)];}
 function f0History(){try{return JSON.parse(localStorage.getItem("cv-f0hist")||"[]");}catch(e){return [];}}
 function pushF0(m){if(!m)return;try{const h=f0History();h.push(m);localStorage.setItem("cv-f0hist",JSON.stringify(h.slice(-30)));}catch(e){}}
 const ADVICE={
@@ -854,6 +857,9 @@ const ADVICE={
   levelSd:"Your volume jumps between statements. Keep one steady speaking level.",
   longest:"Your longest pause ran too long. Keep pauses between half a second and one second.",
   hnr:"Your voice sounds breathy or rough. Warm up with humming and speak on a relaxed, full breath.",
+  cpps:"Tone clarity is below your usual. Hydrate, warm up with humming, and speak on a full breath instead of the end of one.",
+  mid:"You stall inside sentences. Finish the sentence, then pause at the full stop.",
+  run:"You ran long without a break. Break at every full stop so the room can follow.",
   crisp:"Consonants are soft. Finish the t, k, d and s sounds at the ends of words.",
   snr:"Background noise is high. Find a quieter spot or get closer to the mic.",
   peak:"Mic level is off. Aim for a peak between -12 and -3 dB.",
@@ -862,16 +868,17 @@ const ADVICE={
   slow:"Pace is dragging. Keep energy up while still pausing between statements."
 };
 function scoreQualities(st){
+  const cppsBase=histBase("cpps");
   const hist=f0History();const base=hist.length>=3?[...hist].sort((a,b)=>a-b)[Math.floor(hist.length/2)]:null;
   const elev=base&&st.medianF0?+(12*Math.log2(st.medianF0/base)).toFixed(1):null;
   const per10=st.sec>0?st.purposeful/st.sec*10:null;
   const D=(key,name,val,score)=>({key,name,val,score:score==null?null:Math.round(score)});
   const Q=[
-    {k:"smooth",name:"Smooth",d:[D("wobble","Pitch steadiness",st.wobble!=null?st.wobble+"% wobble":"n/a",QLB(st.wobble,1.5,4)),D("shimmer","Volume steadiness",st.shimmer!=null?st.shimmer+" dB flicker":"n/a",QLB(st.shimmer,1.5,3.5)),D("freezes","No freezes",st.freezes+"",QLB(st.freezes,0,2)),D("rhythm","Even rhythm",st.rhythmCv!=null?Math.round(st.rhythmCv*100)+"% variation":"n/a",QLB(st.rhythmCv,0.2,0.5)),D("hes","No um/uh",st.hesitations+"",QLB(st.hesitations,0,3))]},
+    {k:"smooth",name:"Smooth",d:[D("wobble","Pitch steadiness",st.wobble!=null?st.wobble+"% wobble":"n/a",QLB(st.wobble,1.5,4)),D("shimmer","Volume steadiness",st.shimmer!=null?st.shimmer+" dB flicker":"n/a",QLB(st.shimmer,1.5,3.5)),D("freezes","No freezes",st.freezes+"",QLB(st.freezes,0,2)),D("rhythm","Even rhythm",st.rhythmCv!=null?Math.round(st.rhythmCv*100)+"% variation":"n/a",QLB(st.rhythmCv,0.2,0.5)),D("mid","No mid-sentence stalls",st.midPauses+"",QLB(st.midPauses,1,6)),D("hes","No um/uh",st.hesitations+"",QLB(st.hesitations,0,3))]},
     {k:"calm",name:"Calm",d:[D("pace","Pace",st.estWpm?"~"+st.estWpm+" wpm":"n/a",QBAND(st.estWpm,100,125,150,175)),D("elev","Pitch vs your usual",elev==null?"building baseline":(elev>0?"+":"")+elev+" st",QLB(elev,0.5,3)),D("art","Word speed",st.artRate+" syll/s",QLB(st.artRate,5.2,6.5)),D("purposeful","Deliberate pauses",st.purposeful+"",QHB(per10,0,1)),D("rushed","Rushed statements",st.rushed+"",QLB(st.rushed,0,2))]},
     {k:"reassuring",name:"Reassuring",d:[D("falling","Statements ending down",st.falling!=null?st.falling+"%":"n/a",QHB(st.falling,40,80)),D("endsLow","Endings below your pitch",st.endsLowPct!=null?st.endsLowPct+"%":"n/a",QHB(st.endsLowPct,40,85)),D("decl","Pitch settles through statements",st.declination!=null?(st.declination>0?"+":"")+st.declination+" st/s":"n/a",QLB(st.declination,-0.8,0.8)),D("rise","No upspeak",st.rise+"",QLB(st.rise,0,3))]},
-    {k:"confident",name:"Confident",d:[D("trail","Volume held at the end",st.trailAvg!=null?(st.trailAvg>0?"+":"")+st.trailAvg+" dB":"n/a",QHB(st.trailAvg,-5,-2)),D("levelSd","Steady volume",st.levelSd+" dB swing",QLB(st.levelSd,2.5,6)),D("hes","No um/uh",st.hesitations+"",QLB(st.hesitations,0,3)),D("rise","No upspeak",st.rise+"",QLB(st.rise,0,3)),D("longest","Longest pause",st.longest+"s",QLB(st.longest,1.2,2.5))]},
-    {k:"clear",name:"Clear",d:[D("hnr","Voice clarity",st.hnr!=null?st.hnr+" dB":"n/a",QHB(st.hnr,5,11)),D("crisp","Consonant crispness",st.crisp!=null?st.crisp+" dB":"n/a",QHB(st.crisp,-12,-5)),D("art","Word speed",st.artRate+" syll/s",QLB(st.artRate,5.5,7)),D("snr","Quiet background",st.snr+" dB",QHB(st.snr,12,25)),D("peak","Mic level",st.peak+" dB",QBAND(st.peak,-35,-18,-1,0.1))]},
+    {k:"confident",name:"Confident",d:[D("trail","Volume held at the end",st.trailAvg!=null?(st.trailAvg>0?"+":"")+st.trailAvg+" dB":"n/a",QHB(st.trailAvg,-5,-2)),D("levelSd","Steady volume",st.levelSd+" dB swing",QLB(st.levelSd,2.5,6)),D("hes","No um/uh",st.hesitations+"",QLB(st.hesitations,0,3)),D("rise","No upspeak",st.rise+"",QLB(st.rise,0,3)),D("longest","Longest pause",st.longest+"s",QLB(st.longest,1.2,2.5)),D("run","Longest unbroken run",st.longestRun+"s",QLB(st.longestRun,12,25))]},
+    {k:"clear",name:"Clear",d:[D("hnr","Voice clarity",st.hnr!=null?st.hnr+" dB":"n/a",QHB(st.hnr,5,11)),D("crisp","Consonant crispness",st.crisp!=null?st.crisp+" dB":"n/a",QHB(st.crisp,-12,-5)),D("art","Word speed",st.artRate+" syll/s",QLB(st.artRate,5.5,7)),D("cpps","Tone clarity (CPPS)",st.cpps!=null?st.cpps+" dB"+(cppsBase?` (base ${cppsBase})`:" (building baseline)"):"n/a",cppsBase?QHB(st.cpps,cppsBase-3,cppsBase+1):null),D("snr","Quiet background",st.snr+" dB",QHB(st.snr,12,25)),D("peak","Mic level",st.peak+" dB",QBAND(st.peak,-35,-18,-1,0.1))]},
     {k:"engaging",name:"Engaging",d:[D("range","Pitch range",st.rangeSt!=null?st.rangeSt+" st":"n/a",QBAND(st.rangeSt,3,6,10,14)),D("dyn","Loudness contrast",st.dynRange!=null?st.dynRange+" dB":"n/a",QBAND(st.dynRange,5,10,25,35)),D("slow","Energy",st.estWpm?"~"+st.estWpm+" wpm":"n/a",QHB(st.estWpm,95,120))]}
   ];
   Q.forEach(q=>{const s=q.d.map(x=>x.score).filter(v=>v!=null);q.score=s.length?Math.round(s.reduce((a,b)=>a+b,0)/s.length):null;});
@@ -896,7 +903,7 @@ function qualityView(st){
     ${prev?`<p class="muted" style="font-size:12px">Dashed outline: your previous take.</p>`:""}</div>`);
   st.q=Object.fromEntries(r.Q.map(q=>[q.k,q.score]));st.qOverall=r.overall;st.qWorst=r.worst;st.pitchElev=r.elev;
   try{localStorage.setItem("cv-qprev",JSON.stringify(st.q));}catch(e){}
-  pushF0(st.medianF0);
+  pushF0(st.medianF0);histPush("cpps",st.cpps);histPush("alpha",st.alphaRatio);
   return el;
 }
 
@@ -923,6 +930,12 @@ function reportView(st,limit,opts={}){
   if(st.endsLowPct!=null)G2.push(gauge("Endings below your pitch",st.endsLowPct+"%",st.endsLowPct,0,100,[[0,50,"bad"],[50,75,"warn"],[75,101,"good"]]));
   if(st.declination!=null)G2.push(gauge("Pitch drift per statement",(st.declination>0?"+":"")+st.declination+" st/s",st.declination,-4,3,[[-1e9,-0.5,"good"],[-0.5,0.5,"warn"],[0.5,1e9,"bad"]]));
   if(st.dynRange!=null)G2.push(gauge("Loudness contrast",st.dynRange+" dB",st.dynRange,0,40,[[0,8,"warn"],[8,26,"good"],[26,1e9,"warn"]]));
+  if(st.cpps!=null){const cb=histBase("cpps");G2.push(gauge("Tone clarity (CPPS estimate)",st.cpps+" dB"+(cb?` vs base ${cb}`:" (baseline building)"),cb?st.cpps-cb:0,-6,4,[[-1e9,-3,"bad"],[-3,-1,"warn"],[-1,1e9,"good"]]));}
+  if(st.alphaRatio!=null){const ab=histBase("alpha");G2.push(gauge("Spectral balance (alpha ratio)",st.alphaRatio+" dB"+(ab?` vs base ${ab}`:" (baseline building)"),ab?st.alphaRatio-ab:0,-8,8,[[-1e9,-4,"warn"],[-4,4,"good"],[4,1e9,"warn"]]));}
+  if(st.pauseRate!=null)G2.push(gauge("Pauses per minute (250 ms+)",st.pauseRate+"/min · "+st.midPauses+" mid-sentence",st.pauseRate,0,40,[[0,8,"warn"],[8,26,"good"],[26,1e9,"warn"]]));
+  if(st.speechRate!=null)G2.push(gauge("Speech rate vs word speed",st.speechRate+" vs "+st.artRate+" syll/s",st.speechRate,1,7,[[0,2.5,"warn"],[2.5,4.5,"good"],[4.5,5.5,"warn"],[5.5,1e9,"bad"]]));
+  G2.push(gauge("Longest unbroken run",st.longestRun+"s",st.longestRun,0,40,[[0,12,"good"],[12,25,"warn"],[25,1e9,"bad"]]));
+  if(st.f0sd!=null)G2.push(gauge("Pitch spread (SD)",st.f0sd+" st"+(st.riseSlope?` · rises ${st.riseSlope}, falls ${st.fallSlope} st/s`:""),st.f0sd,0,6,[[0,1.5,"bad"],[1.5,2.2,"warn"],[2.2,4.5,"good"],[4.5,1e9,"warn"]]));
   if(st.medianF0)G2.push(gauge("Typical pitch",st.medianF0+" Hz "+noteName(st.medianF0)+(st.pitchElev!=null?` (${st.pitchElev>0?"+":""}${st.pitchElev} st vs usual)`:""),st.pitchElev??0,-4,4,[[-1e9,1,"good"],[1,2.5,"warn"],[2.5,1e9,"bad"]]));
   const on=G.filter(g=>g.cls==="good").length,tot=G.length,pctOn=on/tot;
   const R=30,C=2*Math.PI*R;
@@ -1133,7 +1146,7 @@ function renderAnalyze(){
   v.append(rp);
   const sv=h(`<button class="primary" type="button" disabled>Save this take to today's progress</button>`);
   sv.onclick=async()=>{if(!last){toast("Record a take first");return;}const txt=rp.querySelector("textarea").value;const a=analyzeText(txt);
-    const s=sess();s.level=s.level||S.prog.level||1;s.analyzer={falling:last.falling,freezes:last.freezes,wpm:a.words&&last.sec?Math.round(a.words/last.sec*60):last.estWpm,range:last.rangeSt,trail:last.trailAvg,hesitations:last.hesitations,peak:last.peak,sec:last.sec,f100:a.words?a.f100:null,h100:a.words?a.h100:null,tics:a.words?a.tics:null,source:"app",q:last.q||null,vq:last.qOverall??null,hnr:last.hnr,wobble:last.wobble,shimmer:last.shimmer};
+    const s=sess();s.level=s.level||S.prog.level||1;s.analyzer={falling:last.falling,freezes:last.freezes,wpm:a.words&&last.sec?Math.round(a.words/last.sec*60):last.estWpm,range:last.rangeSt,trail:last.trailAvg,hesitations:last.hesitations,peak:last.peak,sec:last.sec,f100:a.words?a.f100:null,h100:a.words?a.h100:null,tics:a.words?a.tics:null,source:"app",q:last.q||null,vq:last.qOverall??null,hnr:last.hnr,wobble:last.wobble,shimmer:last.shimmer,cpps:last.cpps,alphaRatio:last.alphaRatio,pauseRate:last.pauseRate,midPauses:last.midPauses,speechRate:last.speechRate,longestRun:last.longestRun,f0sd:last.f0sd};
     await saveSession();toast("Saved to today's progress");};
   v.append(sv);
 }

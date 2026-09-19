@@ -66,6 +66,39 @@ const median=a=>{if(!a.length)return null;const s=a.slice().sort((x,y)=>x-y);ret
 const pct=(a,p)=>{if(!a.length)return null;const s=a.slice().sort((x,y)=>x-y);return s[Math.min(s.length-1,Math.floor(s.length*p))];};
 const mean=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:0;
 
+
+/* ---------- FFT (iterative radix-2, in place) ---------- */
+function fft(re,im){const n=re.length;for(let i=1,j=0;i<n;i++){let bit=n>>1;for(;j&bit;bit>>=1)j^=bit;j^=bit;if(i<j){let tr=re[i];re[i]=re[j];re[j]=tr;tr=im[i];im[i]=im[j];im[j]=tr;}}
+  for(let len=2;len<=n;len<<=1){const ang=-2*Math.PI/len,wr=Math.cos(ang),wi=Math.sin(ang);
+    for(let i=0;i<n;i+=len){let cr=1,ci=0;for(let k=0;k<len/2;k++){const ur=re[i+k],ui=im[i+k],vr=re[i+k+len/2]*cr-im[i+k+len/2]*ci,vi=re[i+k+len/2]*ci+im[i+k+len/2]*cr;
+      re[i+k]=ur+vr;im[i+k]=ui+vi;re[i+k+len/2]=ur-vr;im[i+k+len/2]=ui-vi;const ncr=cr*wr-ci*wi;ci=cr*wi+ci*wr;cr=ncr;}}}
+}
+const HANN=(()=>{const N=1024,w=new Float32Array(N);for(let i=0;i<N;i++)w[i]=0.5-0.5*Math.cos(2*Math.PI*i/(N-1));return w;})();
+/* spectral frame: returns {logMag (513), alpha, hammarberg, cpps} */
+function specFrame(x,start){
+  const N=1024;if(start+N>x.length)return null;
+  const re=new Float64Array(N),im=new Float64Array(N);
+  for(let i=0;i<N;i++)re[i]=x[start+i]*HANN[i];
+  fft(re,im);
+  const half=N/2+1,mag=new Float64Array(half),lg=new Float64Array(half);
+  for(let i=0;i<half;i++){mag[i]=Math.sqrt(re[i]*re[i]+im[i]*im[i])+1e-12;lg[i]=Math.log(mag[i]);}
+  const binHz=SR/N;const bandE=(lo,hi)=>{let s=0;for(let i=Math.max(1,Math.round(lo/binHz));i<=Math.min(half-1,Math.round(hi/binHz));i++)s+=mag[i]*mag[i];return s;};
+  const bandPeak=(lo,hi)=>{let m=0;for(let i=Math.max(1,Math.round(lo/binHz));i<=Math.min(half-1,Math.round(hi/binHz));i++)if(mag[i]>m)m=mag[i];return 20*Math.log10(m+1e-12);};
+  const alpha=10*Math.log10((bandE(50,1000)+1e-12)/(bandE(1000,5000)+1e-12));
+  const hammar=bandPeak(0,2000)-bandPeak(2000,5000);
+  // real cepstrum of the log magnitude spectrum
+  const cre=new Float64Array(N),cim=new Float64Array(N);
+  for(let i=0;i<half;i++){cre[i]=lg[i];if(i>0&&i<half-1)cre[N-i]=lg[i];}
+  fft(cre,cim);
+  const q0=Math.round(SR/300),q1=Math.round(SR/60);// quefrency bins for 60 to 300 Hz
+  const c=new Float64Array(q1+2);for(let i=0;i<=q1+1;i++)c[i]=Math.sqrt(cre[i]*cre[i]+cim[i]*cim[i])/N;
+  let pk=-1,pkI=q0;for(let i=q0;i<=q1;i++)if(c[i]>pk){pk=c[i];pkI=i;}
+  // least squares line through the cepstrum in that quefrency band, prominence = peak minus line
+  let sx=0,sy=0,sxx=0,sxy=0,m=0;for(let i=q0;i<=q1;i++){const y=20*Math.log10(c[i]+1e-12);sx+=i;sy+=y;sxx+=i*i;sxy+=i*y;m++;}
+  const den=m*sxx-sx*sx,b1=den?(m*sxy-sx*sy)/den:0,b0=(sy-b1*sx)/m;
+  const cpps=20*Math.log10(pk+1e-12)-(b0+b1*pkI);
+  return {alpha,hammar,cpps};
+}
 /* ---------- full analysis ---------- */
 function analyze(samples,inSr,opts={}){
   const x=resample(samples,inSr,SR);const dur=x.length/SR;
@@ -123,6 +156,26 @@ function analyze(samples,inSr,opts={}){
   // loudness consistency across phrases
   const lv=out.map(o=>o.level),lvSd=lv.length>1?+Math.sqrt(mean(lv.map(q=>(q-mean(lv))*(q-mean(lv))))).toFixed(1):0;
   const trails=out.map(o=>o.trail).filter(v=>v!=null);
+  /* ---- spectral metrics: CPPS estimate, spectral balance ---- */
+  const cppsA=[],alphaA=[],hamA=[];
+  for(let f=0;f<nF;f+=4){if(!act[f]||!(f0c[f]>0))continue;const s=specFrame(x,f*hop);if(!s)continue;
+    if(isFinite(s.cpps))cppsA.push(s.cpps);if(isFinite(s.alpha))alphaA.push(s.alpha);if(isFinite(s.hammar))hamA.push(s.hammar);}
+  const cpps=cppsA.length>8?+median(cppsA).toFixed(1):null;
+  const alphaRatio=alphaA.length>8?+median(alphaA).toFixed(1):null;
+  const hammarberg=hamA.length>8?+median(hamA).toFixed(1):null;
+  /* ---- fluency: pause taxonomy at the validated 250 ms threshold ---- */
+  const allGaps=gaps.filter(g=>g.len>=0.25);
+  const boundary=allGaps.filter(g=>g.len>=0.35),mid=allGaps.filter(g=>g.len<0.35);
+  const pauseRate=span>0?+(allGaps.length/span*60).toFixed(1):null;
+  const meanPause250=allGaps.length?+mean(allGaps.map(g=>g.len)).toFixed(2):0;
+  const speechRate=span>0?+(syl/span).toFixed(2):null;
+  const longestRun=+Math.max(...out.map(o=>o.len)).toFixed(1);
+  /* ---- pitch spread and movement in semitones ---- */
+  const semiVals=voiced.map(v=>12*Math.log2(v/100));
+  const f0sd=semiVals.length>20?+Math.sqrt(mean(semiVals.map(v=>(v-mean(semiVals))*(v-mean(semiVals))))).toFixed(2):null;
+  const slopes=[];for(let f=2;f<nF;f+=2){if(f0c[f]>0&&f0c[f-2]>0&&act[f]){const d=(12*Math.log2(f0c[f]/f0c[f-2]))/0.02;if(Math.abs(d)<60)slopes.push(d);}}
+  const risers=slopes.filter(v=>v>1),fallers=slopes.filter(v=>v<-1);
+  const riseSlope=risers.length?+mean(risers).toFixed(1):null,fallSlope=fallers.length?+mean(fallers).toFixed(1):null;
   /* ---- voice quality metrics ---- */
   const med=voiced.length?median(voiced):null;
   // voice clarity: harmonics-to-noise estimate from YIN aperiodicity on voiced, active frames
@@ -152,7 +205,7 @@ function analyze(samples,inSr,opts={}){
     const lastF=idx.slice(-6).map(f=>f0c[f]);endsN++;if(median(lastF)<med)endsLow++;
     const xs=idx.map(f=>f*0.01),ys=idx.map(f=>semis(f0c[f]));const mx=mean(xs),my=mean(ys);let nu=0,de=0;xs.forEach((v,k)=>{nu+=(v-mx)*(ys[k]-my);de+=(v-mx)*(v-mx);});if(de>0&&(xs[xs.length-1]-xs[0])>=0.6)decl.push(nu/de);});
   const endsLowPct=endsN?Math.round(endsLow/endsN*100):null,declination=decl.length?+median(decl).toFixed(2):null;
-  return {hnr,wobble,shimmer,crisp,dynRange,rhythmCv,rushed,purposeful,pauseShare,endsLow,endsN,endsLowPct,declination,
+  return {cpps,alphaRatio,hammarberg,pauseRate,meanPause250,pauses250:allGaps.length,boundaryPauses:boundary.length,midPauses:mid.length,speechRate,longestRun,f0sd,riseSlope,fallSlope,hnr,wobble,shimmer,crisp,dynRange,rhythmCv,rushed,purposeful,pauseShare,endsLow,endsN,endsLowPct,declination,
     dur:+dur.toFixed(1),sec:+span.toFixed(1),speechSec:+phon.toFixed(1),talkRatio:+(phon/span).toFixed(2),
     pauses:pauses.length,meanPause:pauses.length?+mean(pauses.map(g=>g.len)).toFixed(2):0,longest:gaps.length?+Math.max(...gaps.map(g=>g.len)).toFixed(1):0,
     freezes:freezes.length,freezeAt:freezes.map(g=>+g.at.toFixed(1)),freezeGaps:freezes.map(g=>({at:+g.at.toFixed(2),len:+g.len.toFixed(2)})),
