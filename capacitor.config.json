@@ -1,0 +1,14 @@
+{
+  "appId": "io.github.cashclowns.clownvoiceai",
+  "appName": "ClownVoiceAI",
+  "webDir": "www",
+  "server": { "iosScheme": "app" },
+  "ios": {
+    "contentInset": "always",
+    "limitsNavigationsToAppBoundDomains": false,
+    "backgroundColor": "#07090DFF"
+  },
+  "plugins": {
+    "SplashScreen": { "backgroundColor": "#07090D", "showSpinner": false }
+  }
+}
