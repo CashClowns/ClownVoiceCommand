@@ -1,0 +1,96 @@
+# Builds the iOS app on a GitHub-hosted macOS runner and uploads it to TestFlight.
+# Nothing here needs a Mac of your own. Run it from the Actions tab.
+#
+# Secrets this workflow needs (Settings > Secrets and variables > Actions):
+#   APPSTORE_ISSUER_ID     App Store Connect API key issuer id
+#   APPSTORE_KEY_ID        App Store Connect API key id
+#   APPSTORE_PRIVATE_KEY   contents of the .p8 file, whole thing including the BEGIN/END lines
+#   BUILD_CERT_P12         base64 of your Apple distribution certificate .p12
+#   BUILD_CERT_PASSWORD    password for that .p12
+#   PROV_PROFILE           base64 of the App Store provisioning profile (.mobileprovision)
+#   KEYCHAIN_PASSWORD      any string you invent, used only inside the runner
+
+name: iOS build
+
+on:
+  workflow_dispatch:          # run it by hand from the Actions tab
+  push:
+    tags: ["v*"]              # or on a version tag
+
+jobs:
+  build:
+    runs-on: macos-14
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Generate the iOS project
+        run: |
+          npx cap add ios
+          npx cap sync ios
+          node ios-permissions.js
+
+      - name: Import signing certificate
+        env:
+          BUILD_CERT_P12: ${{ secrets.BUILD_CERT_P12 }}
+          BUILD_CERT_PASSWORD: ${{ secrets.BUILD_CERT_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+          PROV_PROFILE: ${{ secrets.PROV_PROFILE }}
+        run: |
+          CERT=$RUNNER_TEMP/cert.p12
+          PROFILE=$RUNNER_TEMP/profile.mobileprovision
+          KEYCHAIN=$RUNNER_TEMP/build.keychain-db
+          echo -n "$BUILD_CERT_P12" | base64 --decode -o $CERT
+          echo -n "$PROV_PROFILE" | base64 --decode -o $PROFILE
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN
+          security set-keychain-settings -lut 21600 $KEYCHAIN
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN
+          security import $CERT -P "$BUILD_CERT_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN
+          security list-keychain -d user -s $KEYCHAIN
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp $PROFILE ~/Library/MobileDevice/Provisioning\ Profiles/
+
+      - name: Archive
+        run: |
+          cd ios/App
+          pod install
+          xcodebuild -workspace App.xcworkspace -scheme App \
+            -configuration Release -archivePath $RUNNER_TEMP/App.xcarchive \
+            -destination "generic/platform=iOS" archive
+
+      - name: Export the ipa
+        run: |
+          cat > $RUNNER_TEMP/export.plist <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store</string>
+            <key>destination</key><string>export</string>
+          </dict></plist>
+          PLIST
+          xcodebuild -exportArchive -archivePath $RUNNER_TEMP/App.xcarchive \
+            -exportOptionsPlist $RUNNER_TEMP/export.plist -exportPath $RUNNER_TEMP/export
+
+      - name: Upload to TestFlight
+        env:
+          ISSUER: ${{ secrets.APPSTORE_ISSUER_ID }}
+          KEYID: ${{ secrets.APPSTORE_KEY_ID }}
+          PRIVATE_KEY: ${{ secrets.APPSTORE_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/private_keys
+          echo "$PRIVATE_KEY" > ~/private_keys/AuthKey_$KEYID.p8
+          xcrun altool --upload-app -f $RUNNER_TEMP/export/*.ipa -t ios \
+            --apiKey "$KEYID" --apiIssuer "$ISSUER"
+
+      - name: Keep the ipa as a build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ClownVoiceAI-ipa
+          path: ${{ runner.temp }}/export/*.ipa
