@@ -1507,10 +1507,12 @@ function aiCoachSlot(box,state){
       await saveSession();
     }catch(err){b.disabled=false;b.textContent="Try again";
       slot.querySelector(".aierr")&&slot.querySelector(".aierr").remove();
-      const why=err&&err.code==="rate_limited"?"Too many requests. Wait a minute and try again."
+      const why=err&&err.code==="truncated"?"The AI reply was cut off before it finished. Try again, or shorten the take."
+        :(err&&err.code==="invalid_json"?"The AI coach replied in the wrong format. "+(err.message||"")
+        :err&&err.code==="rate_limited"?"Too many requests. Wait a minute and try again."
         :(err&&err.code==="network"?"The AI coach could not be reached. "+(err.message||"")+" Check that this device is online."
         :(err&&err.status?"The AI coach returned "+err.status+". "+(err.message||"")
-        :"The AI coach could not be reached. "+((err&&(err.message||err.code))||"No response.")));
+        :"The AI coach could not be reached. "+((err&&(err.message||err.code))||"No response."))));
       slot.append(h(`<p class="muted aierr" style="font-size:13px">${esc(why+" Your on-device scores above are unaffected.")}</p>`));}
   };
 }
@@ -2311,13 +2313,30 @@ function makeSample(key,model){
   const call=async(input,opts={})=>{
     const messages=typeof input==="string"?[{role:"user",content:input}]:input;
     let r;
-    try{r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"content-type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model,max_tokens:1500,messages})});}
+    try{r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"content-type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model,max_tokens:(opts&&opts.max_tokens)||4000,messages})});}
     catch(netErr){throw {code:"network",message:"Network request failed: "+(netErr&&netErr.message||netErr)};}
     if(r.status===429)throw {code:"rate_limited"};
     if(!r.ok)throw {code:"upstream_error",status:r.status,message:(await r.text()).slice(0,400)};
-    const j=await r.json();return {text:(j.content||[]).filter(c=>c.type==="text").map(c=>c.text).join("")};
+    const j=await r.json();
+    if(j.stop_reason==="max_tokens")throw {code:"truncated",message:"The model hit the token limit before finishing. Raise max_tokens or shorten the take."};
+    return {text:(j.content||[]).filter(c=>c.type==="text").map(c=>c.text).join("")};
   };
-  call.json=async(input,opts)=>{const {text}=await call(input,opts);const a=text.indexOf("{"),b=text.lastIndexOf("}");if(a<0||b<a)throw {code:"invalid_json"};return JSON.parse(text.slice(a,b+1));};
+  call.json=async(input,opts)=>{
+    const parse=t=>{
+      let x=String(t).replace(/^\s*```(?:json)?/i,"").replace(/```\s*$/,"");   // strip a markdown fence if the model added one
+      const a=x.indexOf("{"),b=x.lastIndexOf("}");
+      if(a<0||b<a)throw {code:"invalid_json",message:"No JSON object in the reply."};
+      return JSON.parse(x.slice(a,b+1));
+    };
+    const {text}=await call(input,opts);
+    try{return parse(text);}
+    catch(e1){
+      // one retry, JSON only, with more room
+      const retry=await call([{role:"user",content:(typeof input==="string"?input:JSON.stringify(input))+"\n\nReturn ONLY the JSON object. No preamble, no markdown fence, no text after the closing brace."},{role:"assistant",content:"{"}],Object.assign({},opts,{max_tokens:6000}));
+      try{return parse("{"+retry.text);}
+      catch(e2){throw {code:"invalid_json",message:"The model reply was not valid JSON after a retry: "+String(e2&&e2.message||e2).slice(0,120)};}
+    }
+  };
   return call;
 }
 function initSample(){const k=getKey(),m=getModel();S.sample=k&&m?makeSample(k,m):null;}
