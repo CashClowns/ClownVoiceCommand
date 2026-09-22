@@ -27,7 +27,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-
+      - name: Build www from the repo root
+        run: |
+          mkdir -p www
+          cp index.html analyzer.js config.js sw.js manifest.webmanifest whisper-worker.js www/
+          cp icon-*.png favicon.png www/
       - name: Install dependencies
         run: npm install
 
